@@ -17,6 +17,7 @@ export default function App() {
   const Stack = createNativeStackNavigator();
   const InsideStack = createNativeStackNavigator();
   const [user, setUser] = useState<User | null>(null);
+  
 
   useEffect(() => {
     onAuthStateChanged(FIREBASE_AUTH, (user)=> {
