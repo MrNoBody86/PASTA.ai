@@ -1,9 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Option from '../components/Option';
 import { useEffect, useState } from 'react';
-import { quizData } from '../questions';
-import Results from '../components/Results';
 import Login from '@/components/Login';
 import { NavigationContainer, NavigationIndependentTree } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
@@ -11,6 +8,7 @@ import { Header } from 'react-native/Libraries/NewAppScreen';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import PTest from "@/components/PTest";
+import Chat from "@/components/Chat";
 
 export default function App() {
 
@@ -30,6 +28,7 @@ export default function App() {
     return (
       <InsideStack.Navigator>
         <InsideStack.Screen name="Personality Test" component={PTest}/>
+        <InsideStack.Screen name="Chat" component={Chat}/>
       </InsideStack.Navigator>
     )
   }
