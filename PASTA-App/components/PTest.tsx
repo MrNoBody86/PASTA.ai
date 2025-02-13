@@ -7,6 +7,7 @@ import { quizData } from '../questions';
 import Results from '../components/Results';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import { NavigationProp } from '@react-navigation/native';
+import Chat from '../components/Chat';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -153,6 +154,7 @@ const PTest = ({ navigation } : RouterProps) => {
       <SafeAreaView>
         <ScrollView>
         <Pressable style={styles.button} onPress={() => FIREBASE_AUTH.signOut()}><Text style={styles.buttonText}>Sign Out</Text></Pressable>
+        <Pressable style={styles.button} onPress={() => navigation.navigate('Chat')}><Text style={styles.buttonText}>ChatBox</Text></Pressable>
         <View style={styles.countwrapper} >
           <Text style={{fontWeight: "600"}} >{currentQuestionIndex + 1}/{questions?.length}</Text>
         </View>
