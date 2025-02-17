@@ -5,13 +5,10 @@ import ChatBubble from "./ChatBubble";
 import { speak, isSpeakingAsync, stop } from "expo-speech";
 import { NavigationProp } from '@react-navigation/native';
 import { Logo2 } from '@/Images';
-import { REACT_APP_GEMINI_API_KEY } from '@env';
+import { REACT_APP_GEMINI_API_KEY } from '@/constants';
 
-interface RouterProps {
-    navigation: NavigationProp<any, any>;
-}
 
-export function Chat({ navigation }: RouterProps) {
+export function Chat() {
     const [chat, setChat] = useState([]);
     const [userInput, setUserInput] = useState("");
     const [loading, setLoading] = useState(false);
