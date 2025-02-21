@@ -5,17 +5,19 @@ import ChatBubble from "./ChatBubble";
 import { speak, isSpeakingAsync, stop } from "expo-speech";
 import { NavigationProp } from '@react-navigation/native';
 import { Logo2 } from '@/Images';
-import { REACT_APP_GEMINI_API_KEY } from '@/constants';
+import api from '@/api';
+// import { query } from 'firebase/firestore';
 
 
-export function Chat() {
+export function Financial_Chat() {
     const [chat, setChat] = useState([]);
     const [userInput, setUserInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
 
-    const API_KEY = REACT_APP_GEMINI_API_KEY;
+    // const API_KEY = REACT_APP_GEMINI_API_KEY;
+    const API_URL = "http://127.0.0.1:8000/get_stock_content/get%20nvda%20stock%20price";
     // const { GoogleGenerativeAI } = require("@google/generative-ai");
     // const genAI = new GoogleGenerativeAI(API_KEY);
     // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -33,22 +35,19 @@ export function Chat() {
         setLoading(true);
 
         try{
-            const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
-                {
-                    contents: updatedChat,
-                }
-            );
+            console.log("Hello")
+            const response = await axios.get(`http://localhost:8000/hello`)
 
-            console.log("Gemini Response", response.data);
+            console.log("Agent Response", response);
 
-            const modelResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            // const modelResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-            if (modelResponse) {
+            if (response) {
                 const updatedChatWithModel = [
                     ...updatedChat,
                     {
                         role: 'model',
-                        parts: [{text: modelResponse}],
+                        parts: [{text: response}],
                     },
                 ];
                 setChat(updatedChatWithModel);
@@ -87,7 +86,7 @@ export function Chat() {
     };
     return (
         <View style={styles.container}>
-                <Text style={styles.title}>Gemini ChatBot</Text>
+                <Text style={styles.title}>Financial ChatBot</Text>
                 <FlatList
                     data={chat}
                     renderItem={renderChatItem}
@@ -113,7 +112,7 @@ export function Chat() {
     
 }
 
-export default Chat;
+export default Financial_Chat;
 
 const styles = StyleSheet.create({
     container:{

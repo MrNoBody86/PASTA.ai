@@ -1,4 +1,4 @@
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { useEffect, useState } from 'react';
 import Login from '@/components/Login';
 import { NavigationContainer, NavigationIndependentTree } from '@react-navigation/native'
@@ -8,8 +8,10 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import PTest from "@/components/PTest";
 import Chat from "@/components/Chat";
+import Financial_Chat from '@/components/Financial_ChatBox';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Logo2} from "@/Images";
+import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
 
 export default function App() {
 
@@ -68,11 +70,20 @@ export default function App() {
                       headerTitle: "ChatBox", 
                       drawerIcon: ({size, color}) => (<Ionicons name="chatbox-outline" color={color} size={size} />)}}
           />
+          <Drawer.Screen 
+            name="Financial Chat" 
+            component={Financial_Chat} 
+            options={{drawerLabel: " Financial Chatbox",
+                      headerTitle: "Financial ChatBox", 
+                      drawerIcon: ({size, color}) => (<Ionicons name="chatbox-outline" color={color} size={size} />)}}
+          />
       </Drawer.Navigator>
     )
   }
 
   return (
+    <SafeAreaProvider>
+    <SafeAreaView style={{flex: 1}}>
     <NavigationIndependentTree>
       <NavigationContainer>
         <Stack.Navigator>
@@ -81,6 +92,8 @@ export default function App() {
         </Stack.Navigator>
       </NavigationContainer>
     </NavigationIndependentTree>
+    </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
