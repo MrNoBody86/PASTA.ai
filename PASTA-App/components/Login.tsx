@@ -1,26 +1,30 @@
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import React, { useState } from 'react'
-import { View, Text, StyleSheet, TextInput, ActivityIndicator, Button, Pressable, KeyboardAvoidingView, Image } from 'react-native'
+import { View, Text, StyleSheet, TextInput, ActivityIndicator, Button, Pressable, KeyboardAvoidingView, Image, ImageBackground } from 'react-native'
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { Logo2 } from '@/Images';
-
+import { Logo2, backgroundImage } from '@/Images';
+import Modal from "react-native-modal";
+import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
 
 const Login = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [signInError, setSignInError] = useState(false);
+    const [signUpError, setSignUpError] = useState(false);
     const auth = FIREBASE_AUTH;
 
     const signIn = async () => {
         setLoading(true);
         try {
             const response = await signInWithEmailAndPassword(auth,email, password);
-            console.log(response);
+            // console.log(response);
         } catch (error:any) {
-            alert(error.message);
-            console.log(error);
+            // alert(error.message);
+            setSignInError(true);
+            // console.log(error);
         }finally {
             setLoading(false);
         }
@@ -30,16 +34,18 @@ const Login = () => {
         setLoading(true);
         try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
-            console.log(response)
+            // console.log(response)
         } catch (error:any) {
-            alert(error.message);
-            console.log(error);
+            setSignUpError(true);
+            // console.log(error);
         } finally {
             setLoading(false);
         }
     }
-
     return (
+        <SafeAreaProvider>
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>    
+        <ImageBackground source={backgroundImage}>
         <View style={styles.container}>
             <View style={styles.loginContainer}>
             <KeyboardAvoidingView behavior='padding'>
@@ -48,26 +54,71 @@ const Login = () => {
                 <TextInput value={name} style={styles.input} placeholder='Full Name' autoCapitalize='none' onChangeText={(text) => setName(text)}></TextInput>
                 <TextInput value={email} style={styles.input} placeholder='Email' autoCapitalize='none' onChangeText={(text) => setEmail(text)}></TextInput>
                 <TextInput secureTextEntry={true} value={password} style={styles.input} placeholder='Password' autoCapitalize='none' onChangeText={(text) => setPassword(text)}></TextInput>
-                {loading ? (<ActivityIndicator size='large' color='#0000ff' />
-                ) : (
+                <Modal isVisible={loading} style={styles.ModalStyle} animationInTiming={1} animationOutTiming={1}>
+                        <View style={styles.View}>
+                        <ActivityIndicator size="large"/>
+                        <Text style={styles.text}>Loading</Text>
+                        </View>
+                </Modal>
+                <Modal isVisible={signInError} style={styles.ModalStyle} animationInTiming={1} animationOutTiming={1}>
+                        <View style={styles.View}>
+                        <Text style={styles.ModalText}>Sign In Failed</Text>
+                        <Pressable style={styles.button} onPress={() => setSignInError(false)}><Text style={styles.buttonText}>Close</Text></Pressable>
+                        </View>
+                </Modal>
+                <Modal isVisible={signUpError} style={styles.ModalStyle} animationInTiming={1} animationOutTiming={1}>
+                        <View style={styles.View}>
+                        <Text style={styles.ModalText}>Sign Up Failed</Text>
+                        <Pressable style={styles.button} onPress={() => setSignUpError(false)}><Text style={styles.buttonText}>Close</Text></Pressable>
+                        </View>
+                </Modal>
                 <View style={styles.inline}>
                     <Pressable style={styles.button} onPress={signIn}><Text style={styles.buttonText}>Login</Text></Pressable>
                     <Pressable style={styles.button} onPress={signUp}><Text style={styles.buttonText}>Sign Up</Text></Pressable>
-                </View>)}
+                </View>
             </KeyboardAvoidingView>
             </View>
+            
         </View>
+        </ImageBackground>
+        </SafeAreaView>
+        </SafeAreaProvider>
     );
 };
 
 export default Login;
  
 const styles = StyleSheet.create({
+      View : {
+        backgroundColor : "white" ,
+        height : 140 ,
+        width : 300,
+        borderRadius : 15,
+        alignItems : "center",
+        justifyContent : "center",
+        borderColor : "black",
+        borderWidth:2,
+        position: 'relative',
+      },
+      text:{
+        fontSize: 16,
+        paddingTop: 10,
+      },
+      ModalText:{
+        fontSize: 18,
+        paddingTop: 20,
+      },
+      ModalStyle: {
+        justifyContent: "center",
+        alignItems: "center"
+      },
+      
     container: {
         marginHorizontal: 20,
         flex: 1,
         justifyContent: "center",
-        alignItems: 'center'
+        alignItems: 'center',
+        backgroundImage: backgroundImage,
     },
     loginContainer:{
         backgroundColor: 'white',
