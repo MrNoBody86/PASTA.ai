@@ -6,7 +6,8 @@ import { speak, isSpeakingAsync, stop } from "expo-speech";
 import { NavigationProp } from '@react-navigation/native';
 import { Logo2 } from '@/Images';
 import { REACT_APP_GEMINI_API_KEY } from '@/constants';
-
+import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
+import { collection, query, where, orderBy, getDocs, limit, addDoc, serverTimestamp, onSnapshot, Timestamp } from "firebase/firestore";
 
 export function Chat() {
     const [chat, setChat] = useState([]);
@@ -14,11 +15,49 @@ export function Chat() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
-
     const API_KEY = REACT_APP_GEMINI_API_KEY;
-    // const { GoogleGenerativeAI } = require("@google/generative-ai");
-    // const genAI = new GoogleGenerativeAI(API_KEY);
-    // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    async function getRecentFinancialChatbotMessages(db, userUid, messageLimit) {
+        const messagesRef = collection(db, "users", userUid, "geminiMessages");
+        const q = query(
+            messagesRef,
+            orderBy("timestamp"), // order ascending, oldest first.
+            limit(messageLimit)
+        );
+        const querySnapshot = await getDocs(q);
+        const messages = [];
+        querySnapshot.forEach((doc) => {
+            // console.log("Document  => ", doc.data());
+            const messageData = {
+                parts: [{text: doc.data().content}] ,
+                role: doc.data().sender,
+                // timestamp: doc.data().timestamp,
+            }
+            messages.push(messageData);
+        });
+        setChat(messages)
+    }
+
+    useEffect(() => {
+        getRecentFinancialChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 20);
+    })
+    
+    async function addMessage(db, userUid, sender, text) {
+        try {
+          const messagesRef = collection(db, "users", userUid, "geminiMessages");
+          const newMessage = {
+            sender: sender,
+            content: text,
+            timestamp: serverTimestamp(),
+          };
+          const docRef = await addDoc(messagesRef, newMessage);
+          console.log("Document written with ID: ", docRef.id);
+          return docRef; //return the document reference.
+        } catch (e) {
+          console.error("Error adding document: ", e);
+          throw e; //rethrow the error to be handled by the caller.
+        }
+      }
 
     const handleUserInput = async () => {
         // Add user input to chat
@@ -29,7 +68,7 @@ export function Chat() {
                 parts: [{text: userInput}],
             },
         ];
-
+        
         setLoading(true);
 
         try{
@@ -52,7 +91,10 @@ export function Chat() {
                     },
                 ];
                 setChat(updatedChatWithModel);
+                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "user", userInput)
+                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", modelResponse)
                 setUserInput("");
+                
             }
 
         } catch (error: any) {
@@ -101,7 +143,7 @@ export function Chat() {
                     onChangeText={setUserInput}
                     placeholder="Type a message"
                 />
-                <TouchableOpacity style={styles.button} onPress={handleUserInput}>
+                <TouchableOpacity style={[styles.button, {backgroundColor: userInput ? '#007AFF' : '#8bbff7'}]} onPress={handleUserInput} disabled={userInput ? false : true}>
                     <Text style={styles.buttonText}>Send</Text>
                 </TouchableOpacity>
             </View>
@@ -109,7 +151,6 @@ export function Chat() {
             {error && <Text style={styles.error}>{error}</Text>}
         </View>
     )
-
     
 }
 

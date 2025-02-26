@@ -5,8 +5,8 @@ import ChatBubble from "./ChatBubble";
 import { speak, isSpeakingAsync, stop } from "expo-speech";
 import { NavigationProp } from '@react-navigation/native';
 import { Logo2 } from '@/Images';
-import api from '@/api';
-// import { query } from 'firebase/firestore';
+import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
+import { collection, query, where, orderBy, getDocs, limit, addDoc, serverTimestamp, onSnapshot, Timestamp } from "firebase/firestore";
 
 
 export function Financial_Chat() {
@@ -16,11 +16,50 @@ export function Financial_Chat() {
     const [error, setError] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
 
-    // const API_KEY = REACT_APP_GEMINI_API_KEY;
-    const API_URL = "http://127.0.0.1:8000/get_stock_content/get%20nvda%20stock%20price";
-    // const { GoogleGenerativeAI } = require("@google/generative-ai");
-    // const genAI = new GoogleGenerativeAI(API_KEY);
-    // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const API_URL = "http://pasta-ai-backend-server.onrender.com/get_stock_content";
+
+    async function getRecentFinancialChatbotMessages(db, userUid, messageLimit) {
+        const messagesRef = collection(db, "users", userUid, "financeMessages");
+        const q = query(
+            messagesRef,
+            orderBy("timestamp"), // order ascending, oldest first.
+            limit(messageLimit)
+        );
+        const querySnapshot = await getDocs(q);
+        const messages = [];
+        querySnapshot.forEach((doc) => {
+            // console.log("Document  => ", doc.data());
+            const messageData = {
+                parts: [{text: doc.data().content}] ,
+                role: doc.data().sender,
+                // timestamp: doc.data().timestamp,
+            }
+            messages.push(messageData);
+        });
+        setChat(messages)
+    }
+
+    useEffect(() => {
+        getRecentFinancialChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 20);
+        // console.log("Stored Messages:",message);
+    })
+
+    async function addMessage(db, userUid, sender, text) {
+        try {
+          const messagesRef = collection(db, "users", userUid, "financeMessages");
+          const newMessage = {
+            sender: sender,
+            content: text,
+            timestamp: serverTimestamp(),
+          };
+          const docRef = await addDoc(messagesRef, newMessage);
+          console.log("Document written with ID: ", docRef.id);
+          return docRef; //return the document reference.
+        } catch (e) {
+          console.error("Error adding document: ", e);
+          throw e; //rethrow the error to be handled by the caller.
+        }
+      }
 
     const handleUserInput = async () => {
         // Add user input to chat
@@ -35,22 +74,23 @@ export function Financial_Chat() {
         setLoading(true);
 
         try{
-            console.log("Hello")
-            const response = await axios.get(`http://localhost:8000/hello`)
+            const response = await axios.get(`https://pasta-ai-backend-server.onrender.com/get_stock_content/${userInput}`)
 
-            console.log("Agent Response", response);
+            console.log("Agent Response", response.data['response']);
 
-            // const modelResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            
 
-            if (response) {
+            if (response.data) {
                 const updatedChatWithModel = [
                     ...updatedChat,
                     {
                         role: 'model',
-                        parts: [{text: response}],
+                        parts: [{text: response.data['response']}],
                     },
                 ];
                 setChat(updatedChatWithModel);
+                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "user", userInput)
+                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", response.data['response'])
                 setUserInput("");
             }
 
@@ -100,7 +140,7 @@ export function Financial_Chat() {
                     onChangeText={setUserInput}
                     placeholder="Type a message"
                 />
-                <TouchableOpacity style={styles.button} onPress={handleUserInput}>
+                <TouchableOpacity style={[styles.button, {backgroundColor: userInput ? '#007AFF' : '#8bbff7'}]} onPress={handleUserInput} disabled={userInput ? false : true}>
                     <Text style={styles.buttonText}>Send</Text>
                 </TouchableOpacity>
             </View>

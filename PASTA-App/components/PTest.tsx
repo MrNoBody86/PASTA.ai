@@ -69,6 +69,7 @@ const PTest = () => {
 
     if (currentQuestionIndex < questions?.length - 1) {
       setCurrentQuestionIndex((prevQuestion) => prevQuestion + 1);
+      setSelectedOption("");
     } else {
       setShowResult(true);
     }
@@ -141,6 +142,7 @@ const PTest = () => {
     setOPE(8);
     setCurrentQuestionIndex(0);
     setShowResult(false);
+    setSelectedOption("");
   }
 
   if (showResult) return  <Results restart={restart} score={score} scoreEXT={scoreEXT} scoreAGG={scoreAGG} scoreCON={scoreCON} scoreNEU={scoreNEU} scoreOPE={scoreOPE} />
@@ -176,7 +178,7 @@ const PTest = () => {
           <Option setSelectedOption={setSelectedOption} checkIfSelected={checkOptionFive} isSelected={checkIfSelected.option5} option={currentQuestion?.options[4]} />
         </View>
 
-        <TouchableOpacity onPress={handleNext} activeOpacity={.8} style={styles.btn} >
+        <TouchableOpacity onPress={handleNext} activeOpacity={.8} style={[styles.btn, {backgroundColor: selectedOption ? "#004643" : "#A9A9A9"}]} disabled={!selectedOption}>
           <Text style={{color:"white", fontWeight: "600"}} >Next</Text>
         </TouchableOpacity>
         </ScrollView>
