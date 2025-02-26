@@ -7,6 +7,7 @@ import { NavigationProp } from '@react-navigation/native';
 import { Logo2 } from '@/Images';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, query, where, orderBy, getDocs, limit, addDoc, serverTimestamp, onSnapshot, Timestamp } from "firebase/firestore";
+import { FITNESS_API_URL } from '@/constants';
 
 
 export function Fitness_Chat() {
@@ -15,8 +16,6 @@ export function Fitness_Chat() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
-
-    const API_URL = "http://pasta-ai-backend-server.onrender.com/get_fitness_content";
 
     async function getRecentFinancialChatbotMessages(db, userUid, messageLimit) {
         const messagesRef = collection(db, "users", userUid, "fitnessMessages");
@@ -74,7 +73,7 @@ export function Fitness_Chat() {
         setLoading(true);
 
         try{
-            const response = await axios.get(`${API_URL}/${userInput}`)
+            const response = await axios.get(`${FITNESS_API_URL}/${userInput}`)
 
             console.log("Agent Response", response.data['response']);
 
