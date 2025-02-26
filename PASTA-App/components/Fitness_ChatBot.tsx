@@ -9,17 +9,17 @@ import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, query, where, orderBy, getDocs, limit, addDoc, serverTimestamp, onSnapshot, Timestamp } from "firebase/firestore";
 
 
-export function Financial_Chat() {
+export function Fitness_Chat() {
     const [chat, setChat] = useState([]);
     const [userInput, setUserInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
 
-    const API_URL = "http://pasta-ai-backend-server.onrender.com/get_stock_content";
+    const API_URL = "http://pasta-ai-backend-server.onrender.com/get_fitness_content";
 
     async function getRecentFinancialChatbotMessages(db, userUid, messageLimit) {
-        const messagesRef = collection(db, "users", userUid, "financeMessages");
+        const messagesRef = collection(db, "users", userUid, "fitnessMessages");
         const q = query(
             messagesRef,
             orderBy("timestamp"), // order ascending, oldest first.
@@ -46,7 +46,7 @@ export function Financial_Chat() {
 
     async function addMessage(db, userUid, sender, text) {
         try {
-          const messagesRef = collection(db, "users", userUid, "financeMessages");
+          const messagesRef = collection(db, "users", userUid, "fitnessMessages");
           const newMessage = {
             sender: sender,
             content: text,
@@ -126,7 +126,7 @@ export function Financial_Chat() {
     };
     return (
         <View style={styles.container}>
-                <Text style={styles.title}>Financial ChatBot</Text>
+                <Text style={styles.title}>Fitness ChatBot</Text>
                 <FlatList
                     data={chat}
                     renderItem={renderChatItem}
@@ -152,7 +152,7 @@ export function Financial_Chat() {
     
 }
 
-export default Financial_Chat;
+export default Fitness_Chat;
 
 const styles = StyleSheet.create({
     container:{

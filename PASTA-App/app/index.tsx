@@ -9,6 +9,7 @@ import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import PTest from "@/components/PTest";
 import Chat from "@/components/Chat";
 import Financial_Chat from '@/components/Financial_ChatBox';
+import Fitness_Chat from '@/components/Fitness_ChatBot';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Logo2} from "@/Images";
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
@@ -75,6 +76,13 @@ export default function App() {
             component={Financial_Chat} 
             options={{drawerLabel: " Financial Chatbox",
                       headerTitle: "Financial ChatBox", 
+                      drawerIcon: ({size, color}) => (<Ionicons name="chatbox-outline" color={color} size={size} />)}}
+          />
+          <Drawer.Screen 
+            name="Fitness Chat" 
+            component={Fitness_Chat} 
+            options={{drawerLabel: " Fitness Chatbox",
+                      headerTitle: "Fitness ChatBox", 
                       drawerIcon: ({size, color}) => (<Ionicons name="chatbox-outline" color={color} size={size} />)}}
           />
       </Drawer.Navigator>
