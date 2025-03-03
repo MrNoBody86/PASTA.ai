@@ -2,7 +2,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 
 
-const Results = ({score, scoreEXT, scoreAGG, scoreCON, scoreNEU, scoreOPE, restart}:{score:number, scoreEXT:number, scoreAGG:number, scoreCON:number, scoreNEU:number, scoreOPE:number, restart:()=>void}) => {
+const Results = ({scoreEXT, scoreAGG, scoreCON, scoreNEU, scoreOPE, restart}:{scoreEXT:number, scoreAGG:number, scoreCON:number, scoreNEU:number, scoreOPE:number, restart:()=>void}) => {
   return (
     <View style={styles.container}>
       <View style={styles.wrapper}>
@@ -17,9 +17,9 @@ const Results = ({score, scoreEXT, scoreAGG, scoreCON, scoreNEU, scoreOPE, resta
         <Text style={{fontWeight: "700", fontSize: 16, color: "#004643"}} >Neuroticism: {scoreNEU}/40</Text>
         <Text style={{fontWeight: "700", fontSize: 16, color: "#004643"}} >Openness to Experience:{scoreOPE}/40</Text>
 
-        <TouchableOpacity onPress={restart} activeOpacity={.8} style={styles.btn} >
+        {/* <TouchableOpacity onPress={restart} activeOpacity={.8} style={styles.btn} >
             <Text>Restart</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );

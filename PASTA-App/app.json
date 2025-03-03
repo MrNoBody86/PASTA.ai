@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "PASTA-App",
-    "slug": "PASTA-App",
+    "name": "PASTA.ai",
+    "slug": "pasta-ai",
+    "description": "PASTA.ai is a personalized AI chatbot that helps you with your daily task.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Logo2.png",
@@ -9,13 +10,18 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "IOSpastaAI",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Logo2.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.j0seph_mart1n.pastaai"
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +42,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "5b4dd19f-d6a2-49c9-8dd5-0ab15810d1e6"
+      }
     }
   }
 }
