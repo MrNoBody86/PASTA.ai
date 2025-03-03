@@ -5,23 +5,26 @@ import Option from '../components/Option';
 import { useEffect, useState } from 'react';
 import { quizData } from '../questions';
 import Results from '../components/Results';
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
 import { NavigationProp } from '@react-navigation/native';
 import Chat from '../components/Chat';
-
+import { collection, addDoc, serverTimestamp, orderBy, query, getDocs } from 'firebase/firestore';
 
 const PTest = () => {
-  const [questions, setQuestions] = useState<any>([])
+  const [questions, setQuestions] = useState<any>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const noOfQuestions = 50;
   const [scoreEXT, setEXT] = useState(20);
   const [scoreAGG, setAGG] = useState(14);
   const [scoreCON, setCON] = useState(14);
   const [scoreNEU, setNEU] = useState(38);
   const [scoreOPE, setOPE] = useState(8);
   const scoreOption = {"Disagree":1, "Slightly Disagree":2, "Neutral":3, "Slightly Agree":4, "Agree":5}
-  const [score, setScore] = useState(0);
+  const [questionScore, setQuestionScore] = useState([]);
+  const [personalityScore, setpersonalityScore] = useState([]);
   const [selectedOption, setSelectedOption] = useState("");
   const [showResult, setShowResult] = useState(false);
+  const [questionsAnswered, setQuestionsAnswered] = useState<any>([]);
   const [checkIfSelected, setCheckIfSelected] = useState({
     option1: false,
     option2: false,
@@ -30,48 +33,157 @@ const PTest = () => {
     option5: false,
   })
   const [percentageComplete, setPercentageComplete] = useState(0);
+  let newEXT = scoreEXT;
+  let newAGG = scoreAGG;
+  let newCON = scoreCON;
+  let newNEU = scoreNEU;
+  let newOPE = scoreOPE;
 
   useEffect(() => {
     setQuestions(quizData)
+    getPersonalityQuestionScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
   }, [])
   
   let currentQuestion = questions[currentQuestionIndex];
 
+  async function addPersonalityQuestionScores(db, userId, question, score, trait){
+    try {
+      const messagesRef = collection(db, "users", userId, "personalityQuestionScores");
+      const newMessage = {
+        question: question,
+        score: score,
+        trait: trait,
+        timestamp: serverTimestamp(),
+      };
+      const docRef = await addDoc(messagesRef, newMessage);
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+      throw e; //rethrow the error to be handled by the caller
+    }
+  }
+
+  async function addPersonalityScores(db, userId, scoreEXT, scoreAGG, scoreCON, scoreNEU, scoreOPE){
+    try {
+      const messagesRef = collection(db, "users", userId, "personalityScores");
+      const newMessage = {
+        scoreEXT: scoreEXT,
+        scoreAGG: scoreAGG,
+        scoreCON: scoreCON,
+        scoreNEU: scoreNEU,
+        scoreOPE: scoreOPE,
+        timestamp: serverTimestamp(),
+      };
+      const docRef = await addDoc(messagesRef, newMessage);
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+      throw e; //rethrow the error to be handled by the caller
+    }
+  }
+
+  async function getPersonalityQuestionScores(db, userId){
+      const messagesRef = collection(db, "users", userId, "personalityQuestionScores");
+      const q = query(
+          messagesRef,
+          orderBy("timestamp"), // order ascending, oldest first.
+      );
+      const querySnapshot = await getDocs(q);
+      const questionScores = [];
+      querySnapshot.forEach((doc) => {
+        console.log("Document  => ", doc.id);
+        const messageData = {
+            id: doc.id,
+            question: doc.data().question,
+            score: doc.data().score,
+            trait: doc.data().trait
+            // timestamp: doc.data().timestamp,
+        }
+        questionScores.push(messageData);
+      });
+      setQuestionScore(questionScores)
+  }
+
+  async function getPersonalityScores(db, userId){
+    const messagesRef = collection(db, "users", userId, "personalityScores");
+    const querySnapshot = await getDocs(messagesRef);
+    const personalityScores = [];
+    querySnapshot.forEach((doc) => {
+      // console.log("Document  => ", doc.data());
+      const messageData = {
+          id: doc.id,
+          scoreEXT: doc.data().scoreEXT,
+          scoreAGG: doc.data().scoreAGG,
+          scoreCON: doc.data().scoreCON,
+          scoreNEU: doc.data().scoreNEU,
+          scoreOPE: doc.data().scoreOPE,
+          // timestamp: doc.data().timestamp,
+      }
+      personalityScores.push(messageData);
+    });
+    setpersonalityScore(personalityScores);
+    setEXT(personalityScore[0]["scoreEXT"]);
+    setAGG(personalityScore[0]["scoreAGG"]);
+    setCON(personalityScore[0]["scoreCON"]);
+    setNEU(personalityScore[0]["scoreNEU"]);
+    setOPE(personalityScore[0]["scoreOPE"]);
+  }
 
   useEffect(() => {
-    // let percentage = (((currentQuestionIndex + 1) / questions?.length) * 100);
     let percentage = (currentQuestionIndex + 1) * 2;
-
     setPercentageComplete(percentage);
   }, [currentQuestionIndex]);
 
 
   const handleNext = () => {
-    let correctAnswer = questions[currentQuestionIndex]?.answer;
-    let trait = questions[currentQuestionIndex]?.trait;
+
+    const questionData = {
+      question: currentQuestion?.question,
+      score: scoreOption[selectedOption],
+      trait: currentQuestion?.trait,
+    }
+    const updatedQuestions = [...questionsAnswered, questionData];
+    setQuestionsAnswered(updatedQuestions);
 
     if (currentQuestion?.trait === "Extraversion"){
-      setEXT((prevScore) => prevScore + (scoreOption[selectedOption]*currentQuestion?.value));
+      newEXT = scoreEXT + (scoreOption[selectedOption]*currentQuestion?.value);
+      setEXT(newEXT);
     } else if (currentQuestion?.trait === "Agreeableness"){
-      setAGG((prevScore) => prevScore + (scoreOption[selectedOption]*currentQuestion?.value));
+      newAGG = scoreAGG + (scoreOption[selectedOption]*currentQuestion?.value);
+      setAGG(newAGG);
     } else if (currentQuestion?.trait === "Conscientiousness"){
-      setCON((prevScore) => prevScore + (scoreOption[selectedOption]*currentQuestion?.value));
+      newCON = scoreCON + (scoreOption[selectedOption]*currentQuestion?.value);
+      setCON(newCON);
     } else if (currentQuestion?.trait === "Neuroticism"){
-      setNEU((prevScore) => prevScore + (scoreOption[selectedOption]*currentQuestion?.value));
+      newNEU = scoreNEU + (scoreOption[selectedOption]*currentQuestion?.value);
+      setNEU(newNEU);
     } else if (currentQuestion?.trait === "Openess"){
-      setOPE((prevScore) => prevScore + (scoreOption[selectedOption]*currentQuestion?.value));
+      newOPE = scoreOPE + (scoreOption[selectedOption]*currentQuestion?.value);
+      setOPE(newOPE);
     }
 
-
-    if (selectedOption === correctAnswer) {
-      setScore((prevScore) => prevScore + 1);
-    }
-
-    if (currentQuestionIndex < questions?.length - 1) {
+    if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prevQuestion) => prevQuestion + 1);
       setSelectedOption("");
     } else {
+      const questionData = {
+        question: currentQuestion?.question,
+        score: scoreOption[selectedOption],
+        trait: currentQuestion?.trait,
+      }
+      // console.log("Question Data", questionData);
+      const updatedQuestions = [...questionsAnswered, questionData];
+      setQuestionsAnswered(updatedQuestions);
+      
+      console.log("Questions Answered", updatedQuestions);
+      for (let i = 0; i < updatedQuestions.length; i++){
+        addPersonalityQuestionScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, updatedQuestions[i].question, updatedQuestions[i].score, updatedQuestions[i].trait);
+      }
+      // console.log("Scores:", newEXT, newAGG, newCON, newNEU, newOPE);
+      addPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, newEXT, newAGG, newCON, newNEU, newOPE);
+      
       setShowResult(true);
+
     }
 
     setCheckIfSelected({
@@ -134,18 +246,21 @@ const PTest = () => {
   };
 
   const restart = () => {
-    setScore(0);
-    setAGG(20);
+    setEXT(20);
+    setAGG(14);
     setCON(14);
-    setEXT(14);
     setNEU(38);
     setOPE(8);
     setCurrentQuestionIndex(0);
     setShowResult(false);
     setSelectedOption("");
+    setQuestionsAnswered([]);
   }
 
-  if (showResult) return  <Results restart={restart} score={score} scoreEXT={scoreEXT} scoreAGG={scoreAGG} scoreCON={scoreCON} scoreNEU={scoreNEU} scoreOPE={scoreOPE} />
+  if (showResult || questionScore.length != 0){
+    getPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
+    return  <Results restart={restart} scoreEXT={scoreEXT} scoreAGG={scoreAGG} scoreCON={scoreCON} scoreNEU={scoreNEU} scoreOPE={scoreOPE} />
+  } 
 
   return (
     <View style={styles.container}>

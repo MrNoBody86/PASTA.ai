@@ -10,6 +10,7 @@ import PTest from "@/components/PTest";
 import Chat from "@/components/Chat";
 import Financial_Chat from '@/components/Financial_ChatBox';
 import Fitness_Chat from '@/components/Fitness_ChatBot';
+import Task_Manager from '@/components/Task_Manager';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Logo2} from "@/Images";
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
@@ -84,6 +85,13 @@ export default function App() {
             options={{drawerLabel: " Fitness Chatbox",
                       headerTitle: "Fitness ChatBox", 
                       drawerIcon: ({size, color}) => (<Ionicons name="chatbox-outline" color={color} size={size} />)}}
+          />
+          <Drawer.Screen 
+            name="Task Manager" 
+            component={Task_Manager} 
+            options={{drawerLabel: "Task Manager",
+                      headerTitle: "Task Manager", 
+                      drawerIcon: ({size, color}) => (<Ionicons name="clipboard-outline" color={color} size={size} />)}}
           />
       </Drawer.Navigator>
     )
