@@ -1,15 +1,37 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-
-
-const Results = ({scoreEXT, scoreAGG, scoreCON, scoreNEU, scoreOPE, restart}:{scoreEXT:number, scoreAGG:number, scoreCON:number, scoreNEU:number, scoreOPE:number, restart:()=>void}) => {
+// The Results component displays the quiz results for each personality trait.
+// It accepts scores for Extraversion, Agreeableness, Conscientiousness, Neuroticism, and Openness,
+// as well as a restart function as props.
+const Results = ({
+  scoreEXT,
+  scoreAGG,
+  scoreCON,
+  scoreNEU,
+  scoreOPE,
+  restart,
+}: {
+  scoreEXT: number;
+  scoreAGG: number;
+  scoreCON: number;
+  scoreNEU: number;
+  scoreOPE: number;
+  restart: () => void;
+}) => {
   return (
     <View style={styles.container}>
       <View style={styles.wrapper}>
-        <Text style={{fontWeight:"600", fontSize: 16, color: "#004643"}} >Quiz Complete</Text>
+        {/* Displays a message indicating the quiz is complete */}
+        <Text style={{ fontWeight: "600", fontSize: 16, color: "#004643" }}>
+          Quiz Complete
+        </Text>
 
-        <Text style={{marginVertical: 20, fontWeight: "500"}} >You scored:</Text>
+        {/* Displays a label for the score section */}
+        <Text style={{ marginVertical: 20, fontWeight: "500" }}>
+          You scored:
+        </Text>
 
+        {/* Displays scores for each personality trait */}
         {/* <Text style={{fontWeight: "700", fontSize: 16, color: "#004643"}} >{score}/10</Text> */}
         <Text style={{fontWeight: "700", fontSize: 16, color: "#004643"}} >Extraversion: {scoreEXT}/40</Text>
         <Text style={{fontWeight: "700", fontSize: 16, color: "#004643"}} >Agreeableness: {scoreAGG}/40</Text>
@@ -17,6 +39,7 @@ const Results = ({scoreEXT, scoreAGG, scoreCON, scoreNEU, scoreOPE, restart}:{sc
         <Text style={{fontWeight: "700", fontSize: 16, color: "#004643"}} >Neuroticism: {scoreNEU}/40</Text>
         <Text style={{fontWeight: "700", fontSize: 16, color: "#004643"}} >Openness to Experience:{scoreOPE}/40</Text>
 
+        {/* Button for restarting the quiz (currently commented out) */}
         {/* <TouchableOpacity onPress={restart} activeOpacity={.8} style={styles.btn} >
             <Text>Restart</Text>
         </TouchableOpacity> */}
@@ -27,6 +50,7 @@ const Results = ({scoreEXT, scoreAGG, scoreCON, scoreNEU, scoreOPE, restart}:{sc
 
 export default Results;
 
+// Styles for the Results component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -52,5 +76,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#ABD1C6",
     marginTop: 20,
-  }
+  },
 });

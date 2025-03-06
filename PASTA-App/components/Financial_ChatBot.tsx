@@ -1,72 +1,74 @@
+// Import necessary components and libraries from React Native, Firebase, and Axios
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import axios from 'axios';
 import ChatBubble from "./ChatBubble";
 import { speak, isSpeakingAsync, stop } from "expo-speech";
-import { NavigationProp } from '@react-navigation/native';
-import { Logo2 } from '@/Images';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
-import { FITNESS_API_URL } from '@/constants';
+import { FINANCE_API_URL } from '@/constants';
 
-// Main Fitness_Chat component
-export function Fitness_Chat() {
-    // State variables for chat messages, user input, loading status, error messages, and speech status
+// Financial_Chat component to manage the financial chatbot interface
+export function Financial_Chat() {
+    // Define state variables for chat messages, user input, loading status, error messages, and speech status
     const [chat, setChat] = useState([]);
     const [userInput, setUserInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
 
-    // Fetch recent chat messages from Firebase
-    async function getRecentFitnessChatbotMessages(db, userUid, messageLimit) {
-        const messagesRef = collection(db, "users", userUid, "fitnessMessages");
+    // Function to retrieve recent chat messages from Firebase Firestore
+    async function getRecentFinancialChatbotMessages(db, userUid, messageLimit) {
+        const messagesRef = collection(db, "users", userUid, "financeMessages");
         const q = query(
             messagesRef,
-            orderBy("timestamp"),
-            limit(messageLimit)
+            orderBy("timestamp"),  // Order messages by timestamp in ascending order
+            limit(messageLimit)     // Limit the number of messages retrieved
         );
         const querySnapshot = await getDocs(q);
         const messages = [];
+
+        // Extract message data and format it for display
         querySnapshot.forEach((doc) => {
+            // console.log("Document  => ", doc.data());
             const messageData = {
                 parts: [{ text: doc.data().content }],
                 role: doc.data().sender,
-            };
-            messages.push(messageData);
+                // timestamp: doc.data().timestamp,
+            }
+           messages.push(messageData);
         });
-        setChat(messages);
+        setChat(messages);  // Update chat state with retrieved messages
     }
 
-    // Load messages on component mount
+    // useEffect hook to load chat history on component mount
     useEffect(() => {
         if(FIREBASE_AUTH.currentUser?.uid){
-                    getRecentFitnessChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
-                }
-                // console.log("Stored Messages:",message);
-    }, []);
-
-    // Save a message to Firebase
+            getRecentFinancialChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
+        }
+        // console.log("Stored Messages:",message);
+    })
+    // Function to add a new message to Firebase Firestore
     async function addMessage(db, userUid, sender, text) {
         try {
-            const messagesRef = collection(db, "users", userUid, "fitnessMessages");
+            const messagesRef = collection(db, "users", userUid, "financeMessages");
             const newMessage = {
                 sender: sender,
                 content: text,
                 timestamp: serverTimestamp(),
             };
-            const docRef = await addDoc(messagesRef, newMessage);
+            const docRef = await addDoc(messagesRef, newMessage);  // Save message to Firestore
             console.log("Document written with ID: ", docRef.id);
-            return docRef;
+            return docRef;  // Return reference to the new document
         } catch (e) {
             console.error("Error adding document: ", e);
-            throw e;
+            throw e;  // Rethrow error to be handled by caller
         }
     }
 
-    // Handle user input and API call
+    // Function to handle user input and fetch chatbot response
     const handleUserInput = async () => {
-        // Update chat with user message
+        // Add user input to chat state
         let updatedChat = [
             ...chat,
             {
@@ -74,15 +76,15 @@ export function Fitness_Chat() {
                 parts: [{ text: userInput }],
             },
         ];
-        setLoading(true);
+        setLoading(true);  // Show loading indicator
 
         try {
-            // Make API call to fetch bot response
-            const response = await axios.get(`${FITNESS_API_URL}/${userInput}`);
+            // Send user input to financial API and await response
+            const response = await axios.get(`${FINANCE_API_URL}/${userInput}`);
             console.log("Agent Response", response.data['response']);
 
             if (response.data) {
-                // Update chat with bot response
+                // Add chatbot's response to chat state
                 const updatedChatWithModel = [
                     ...updatedChat,
                     {
@@ -91,49 +93,52 @@ export function Fitness_Chat() {
                     },
                 ];
                 setChat(updatedChatWithModel);
-
-                // Save both user and bot messages to Firebase
+                
+                // Save both user and model messages to Firestore
                 addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "user", userInput);
                 addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", response.data['response']);
-                setUserInput("");
+                
+                setUserInput("");  // Clear user input field
                 setError("");
             }
-        } catch (error) {
-            console.log("Error calling Fitness API", error);
-            setError("An Error occurred, Please try again");
+
+        } catch (error: any) {
+            console.log("Error calling Gemini", error);
+            console.log("Error response", error.response);
+            setError("An Error occurred, Please try again");  // Display error message
         } finally {
-            setLoading(false);
+            setLoading(false);  // Hide loading indicator
         }
     };
 
-    // Handle speech synthesis for chat messages
+    // Function to handle text-to-speech for model messages
     const handleSpeech = async (text) => {
         if (isSpeaking) {
-            stop();
+            stop();  // Stop ongoing speech
             setIsSpeaking(false);
         } else {
             if (!(await isSpeakingAsync())) {
-                speak(text);
+                speak(text);  // Start speech for the provided text
                 setIsSpeaking(true);
             }
         }
     };
 
-    // Render each chat message
+    // Function to render individual chat items using ChatBubble component
     const renderChatItem = ({ item }) => {
         return (
             <ChatBubble
                 role={item.role}
                 text={item.parts[0].text}
-                onSpeech={() => handleSpeech(item.parts[0].text)}
+                onSpeech={() => handleSpeech(item.parts[0].text)}  // Pass speech handler as prop
             />
         );
     };
 
-    // Main render function
+    // Render the main UI for the Financial_Chat component
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Fitness ChatBot</Text>
+            <Text style={styles.title}>Financial ChatBot</Text>
             <FlatList
                 data={chat}
                 renderItem={renderChatItem}
@@ -156,38 +161,36 @@ export function Fitness_Chat() {
                 </TouchableOpacity>
             </View>
             {loading && <ActivityIndicator size="large" color="#0000ff" />}
-            {error && <Text style={styles.error}>{error}</Text>}
+            {error && <Text style={styles.error}>{error}</Text>} 
         </View>
     );
 }
 
-export default Fitness_Chat;
-
-// Styles for the component
+export default Financial_Chat;
 const styles = StyleSheet.create({
-    container: {
+    container:{
         flex: 1,
         padding: 16,
         backgroundColor: "#f8f8f8",
     },
-    title: {
+     title: {
         fontSize: 24,
         fontWeight: "bold",
         marginBottom: 20,
         color: '#333',
         marginTop: 40,
-        textAlign: 'center',
-    },
+        textAlign: 'center'
+     },
     chatContainer: {
         flexGrow: 1,
         justifyContent: 'flex-end',
     },
-    inputContainer: {
-        flexDirection: 'row',
+    inputContainer:{
+        flexDirection: 'row', 
         alignItems: 'center',
         marginTop: 10,
     },
-    input: {
+    input:{
         flex: 1,
         height: 50,
         marginRight: 10,
@@ -196,22 +199,22 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         backgroundColor: "#fff",
         borderRadius: 25,
-        color: '#333',
+        color: '#333'
     },
     button: {
         padding: 12,
         backgroundColor: '#007AFF',
         borderRadius: 20,
     },
-    buttonText: {
+    buttonText:{
         color: '#fff',
         textAlign: 'center',
     },
-    loading: {
+    loading:{
         marginTop: 20,
     },
     error: {
         color: "red",
         marginTop: 10,
-    },
-});
+    }
+})

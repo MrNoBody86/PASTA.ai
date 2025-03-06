@@ -10,42 +10,56 @@ import { NavigationProp } from '@react-navigation/native';
 import Chat from '../components/Chat';
 import { collection, addDoc, serverTimestamp, orderBy, query, getDocs } from 'firebase/firestore';
 
+// Main component for the personality test
 const PTest = () => {
+  // State variables for questions and scores
   const [questions, setQuestions] = useState<any>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const noOfQuestions = 50;
+  
+  // Initial scores for each personality trait
   const [scoreEXT, setEXT] = useState(20);
   const [scoreAGG, setAGG] = useState(14);
   const [scoreCON, setCON] = useState(14);
   const [scoreNEU, setNEU] = useState(38);
   const [scoreOPE, setOPE] = useState(8);
+  
+  // Mapping options to scores
   const scoreOption = {"Disagree":1, "Slightly Disagree":2, "Neutral":3, "Slightly Agree":4, "Agree":5}
+  
+  // State to store various aspects of user progress
   const [questionScore, setQuestionScore] = useState([]);
   const [personalityScore, setpersonalityScore] = useState([]);
   const [selectedOption, setSelectedOption] = useState("");
   const [showResult, setShowResult] = useState(false);
   const [questionsAnswered, setQuestionsAnswered] = useState<any>([]);
+  
+  // State for option selection and progress tracking
   const [checkIfSelected, setCheckIfSelected] = useState({
     option1: false,
     option2: false,
     option3: false,
     option4: false,
     option5: false,
-  })
+  });
   const [percentageComplete, setPercentageComplete] = useState(0);
+  
+  // Variables to temporarily hold updated scores
   let newEXT = scoreEXT;
   let newAGG = scoreAGG;
   let newCON = scoreCON;
   let newNEU = scoreNEU;
   let newOPE = scoreOPE;
 
+  // Load quiz data and previous scores on component mount
   useEffect(() => {
-    setQuestions(quizData)
+    setQuestions(quizData);
     getPersonalityQuestionScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
-  }, [])
+  }, []);
   
   let currentQuestion = questions[currentQuestionIndex];
 
+  // Function to save individual question scores to Firebase
   async function addPersonalityQuestionScores(db, userId, question, score, trait){
     try {
       const messagesRef = collection(db, "users", userId, "personalityQuestionScores");
@@ -63,6 +77,7 @@ const PTest = () => {
     }
   }
 
+  // Function to save overall personality scores to Firebase
   async function addPersonalityScores(db, userId, scoreEXT, scoreAGG, scoreCON, scoreNEU, scoreOPE){
     try {
       const messagesRef = collection(db, "users", userId, "personalityScores");
@@ -82,28 +97,30 @@ const PTest = () => {
     }
   }
 
+  // Function to fetch individual question scores from Firebase
   async function getPersonalityQuestionScores(db, userId){
-      const messagesRef = collection(db, "users", userId, "personalityQuestionScores");
+    const messagesRef = collection(db, "users", userId, "personalityQuestionScores");
       const q = query(
           messagesRef,
           orderBy("timestamp"), // order ascending, oldest first.
       );
-      const querySnapshot = await getDocs(q);
-      const questionScores = [];
-      querySnapshot.forEach((doc) => {
+    const querySnapshot = await getDocs(q);
+    const questionScores = [];
+    querySnapshot.forEach((doc) => {
         console.log("Document  => ", doc.id);
         const messageData = {
-            id: doc.id,
-            question: doc.data().question,
-            score: doc.data().score,
+        id: doc.id,
+        question: doc.data().question,
+        score: doc.data().score,
             trait: doc.data().trait
             // timestamp: doc.data().timestamp,
         }
         questionScores.push(messageData);
       });
-      setQuestionScore(questionScores)
-  }
+    setQuestionScore(questionScores);
+}
 
+  // Function to fetch overall personality scores from Firebase
   async function getPersonalityScores(db, userId){
     const messagesRef = collection(db, "users", userId, "personalityScores");
     const querySnapshot = await getDocs(messagesRef);
@@ -111,12 +128,12 @@ const PTest = () => {
     querySnapshot.forEach((doc) => {
       // console.log("Document  => ", doc.data());
       const messageData = {
-          id: doc.id,
-          scoreEXT: doc.data().scoreEXT,
-          scoreAGG: doc.data().scoreAGG,
-          scoreCON: doc.data().scoreCON,
-          scoreNEU: doc.data().scoreNEU,
-          scoreOPE: doc.data().scoreOPE,
+        id: doc.id,
+        scoreEXT: doc.data().scoreEXT,
+        scoreAGG: doc.data().scoreAGG,
+        scoreCON: doc.data().scoreCON,
+        scoreNEU: doc.data().scoreNEU,
+        scoreOPE: doc.data().scoreOPE,
           // timestamp: doc.data().timestamp,
       }
       personalityScores.push(messageData);
@@ -129,12 +146,13 @@ const PTest = () => {
     setOPE(personalityScore[0]["scoreOPE"]);
   }
 
+  // Track percentage completion of the quiz
   useEffect(() => {
     let percentage = (currentQuestionIndex + 1) * 2;
     setPercentageComplete(percentage);
   }, [currentQuestionIndex]);
 
-
+  // Handle answer selection and score calculation
   const handleNext = () => {
 
     const questionData = {
@@ -184,7 +202,7 @@ const PTest = () => {
       
       setShowResult(true);
 
-    }
+  }
 
     setCheckIfSelected({
       option1: false,
@@ -257,10 +275,11 @@ const PTest = () => {
     setQuestionsAnswered([]);
   }
 
+  // Display results if quiz is completed
   if (showResult || questionScore.length != 0){
     getPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
     return  <Results restart={restart} scoreEXT={scoreEXT} scoreAGG={scoreAGG} scoreCON={scoreCON} scoreNEU={scoreNEU} scoreOPE={scoreOPE} />
-  } 
+  }
 
   return (
     <View style={styles.container}>
@@ -291,7 +310,7 @@ const PTest = () => {
           <Option setSelectedOption={setSelectedOption} checkIfSelected={checkOptionThree} isSelected={checkIfSelected.option3} option={currentQuestion?.options[2]} />
           <Option setSelectedOption={setSelectedOption} checkIfSelected={checkOptionFour} isSelected={checkIfSelected.option4} option={currentQuestion?.options[3]} />
           <Option setSelectedOption={setSelectedOption} checkIfSelected={checkOptionFive} isSelected={checkIfSelected.option5} option={currentQuestion?.options[4]} />
-        </View>
+          </View>
 
         <TouchableOpacity onPress={handleNext} activeOpacity={.8} style={[styles.btn, {backgroundColor: selectedOption ? "#004643" : "#A9A9A9"}]} disabled={!selectedOption}>
           <Text style={{color:"white", fontWeight: "600"}} >Next</Text>
@@ -304,6 +323,7 @@ const PTest = () => {
 
 export default PTest
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
