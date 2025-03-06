@@ -9,7 +9,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import PTest from "@/components/PTest";
 import Chat from "@/components/Chat";
-import Financial_Chat from '@/components/Financial_ChatBox';
+import Financial_Chat from '@/components/Financial_ChatBot';
 import Fitness_Chat from '@/components/Fitness_ChatBot';
 import Task_Manager from '@/components/Task_Manager';
 import Ionicons from '@expo/vector-icons/Ionicons';

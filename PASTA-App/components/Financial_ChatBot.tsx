@@ -43,7 +43,9 @@ export function Financial_Chat() {
 
     // useEffect hook to load chat history on component mount
     useEffect(() => {
-        getRecentFinancialChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 20);
+        if(FIREBASE_AUTH.currentUser?.uid){
+            getRecentFinancialChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
+        }
         // console.log("Stored Messages:",message);
     })
     // Function to add a new message to Firebase Firestore

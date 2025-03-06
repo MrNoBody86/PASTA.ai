@@ -20,7 +20,7 @@ export function Chat() {
     const API_KEY = REACT_APP_GEMINI_API_KEY;  // Gemini API key
 
     // Function to fetch recent messages from Firebase
-    async function getRecentFinancialChatbotMessages(db, userUid, messageLimit) {
+    async function getRecentChatbotMessages(db, userUid, messageLimit) {
         const messagesRef = collection(db, "users", userUid, "geminiMessages");
         const q = query(
             messagesRef,
@@ -41,7 +41,10 @@ export function Chat() {
 
     // useEffect to fetch messages when the component mounts
     useEffect(() => {
-        getRecentFinancialChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 20);
+        if(FIREBASE_AUTH.currentUser?.uid){
+                    getRecentChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
+                }
+                // console.log("Stored Messages:",message);
     }, []);  // Empty dependency array to run only once on mount
     
     // Function to add a new message to Firebase
