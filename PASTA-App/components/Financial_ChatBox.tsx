@@ -157,8 +157,8 @@ export function Financial_Chat() {
                     <Text style={styles.buttonText}>Send</Text>
                 </TouchableOpacity>
             </View>
-            {loading && <ActivityIndicator size="large" color="#0000ff" />}  // Show loading indicator if loading
-            {error && <Text style={styles.error}>{error}</Text>}  // Show error message if error exists
+            {loading && <ActivityIndicator size="large" color="#0000ff" />}
+            {error && <Text style={styles.error}>{error}</Text>} 
         </View>
     );
 }
