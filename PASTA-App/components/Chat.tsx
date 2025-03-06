@@ -101,6 +101,7 @@ export function Chat() {
                 addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "user", userInput);  // Saves user's message to Firebase
                 addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", modelResponse);  // Saves model's response to Firebase
                 setUserInput("");  // Clears user input
+                setError("");
             }
 
         } catch (error: any) {

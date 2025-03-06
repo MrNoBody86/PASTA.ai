@@ -96,6 +96,7 @@ export function Fitness_Chat() {
                 addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "user", userInput);
                 addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", response.data['response']);
                 setUserInput("");
+                setError("");
             }
         } catch (error) {
             console.log("Error calling Fitness API", error);

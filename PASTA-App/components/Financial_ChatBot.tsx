@@ -99,6 +99,7 @@ export function Financial_Chat() {
                 addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", response.data['response']);
                 
                 setUserInput("");  // Clear user input field
+                setError("");
             }
 
         } catch (error: any) {
