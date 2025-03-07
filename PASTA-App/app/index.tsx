@@ -128,7 +128,7 @@ export default function App() {
             {user ? (
               <Stack.Screen name="Inside" component={InsideLayout} options={{ headerShown: false }} />
             ) : (
-              <Stack.Screen name="Login" component={LoginLayout} options={{ headerShown: false }} />
+              <Stack.Screen name="LoginPage" component={LoginLayout} options={{ headerShown: false }} />
             )}
           </Stack.Navigator>
         </NavigationContainer>

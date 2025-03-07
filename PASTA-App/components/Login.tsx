@@ -46,8 +46,11 @@ const Login = ({ navigation } : RouterProps) => {
                             <KeyboardAvoidingView behavior='padding'>
                                 {/* App logo */}
                                 <Image style={styles.image} source={Logo2} />
-                                <Text style={{ fontSize: 20, marginBottom: 20, margin: 'auto' }}>
-                                    Welcome to PASTA.ai
+                                <Text style={{ fontSize: 18, marginBottom: 10, margin: 'auto', textAlign: 'center' }}>
+                                    Welcome back to
+                                </Text>
+                                <Text style={{ fontSize: 21, marginBottom: 20, margin: 'auto', textAlign: 'center' }}>
+                                    PASTA.ai
                                 </Text>
                                 
                                 {/* Input fields for user name, email, and password */}

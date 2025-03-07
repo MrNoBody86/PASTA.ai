@@ -23,12 +23,12 @@ const Results = ({
       <View style={styles.wrapper}>
         {/* Displays a message indicating the quiz is complete */}
         <Text style={{ fontWeight: "600", fontSize: 16, color: "#004643" }}>
-          Quiz Complete
+          Personality Test Complete
         </Text>
 
         {/* Displays a label for the score section */}
         <Text style={{ marginVertical: 20, fontWeight: "500" }}>
-          You scored:
+          Your Results:
         </Text>
 
         {/* Displays scores for each personality trait */}
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     width: "100%",
-    height: 200,
+    height: 250,
     backgroundColor: "#fff",
     borderRadius: 20,
     alignItems: "center",
