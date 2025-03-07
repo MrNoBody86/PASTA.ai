@@ -70,7 +70,7 @@ const PTest = () => {
         timestamp: serverTimestamp(),
       };
       const docRef = await addDoc(messagesRef, newMessage);
-      console.log("Document written with ID: ", docRef.id);
+      // console.log("Document written with ID: ", docRef.id);
     } catch (e) {
       console.error("Error adding document: ", e);
       throw e; //rethrow the error to be handled by the caller
@@ -107,13 +107,13 @@ const PTest = () => {
     const querySnapshot = await getDocs(q);
     const questionScores = [];
     querySnapshot.forEach((doc) => {
-        console.log("Document  => ", doc.id);
+        // console.log("Document  => ", doc.id);
         const messageData = {
         id: doc.id,
         question: doc.data().question,
         score: doc.data().score,
-            trait: doc.data().trait
-            // timestamp: doc.data().timestamp,
+        trait: doc.data().trait
+        // timestamp: doc.data().timestamp,
         }
         questionScores.push(messageData);
       });

@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, ActivityIndicator, Pressable, KeyboardAvoidingView, Image, ImageBackground } from 'react-native';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { Logo2, backgroundImage } from '@/Images';
-
 import Modal from "react-native-modal";
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationProp } from '@react-navigation/native';
@@ -13,8 +12,9 @@ interface RouterProps {
 }
 
 // Login component for handling user authentication
-const Login = ({ navigation } : RouterProps) => {
+const Signup = ({ navigation } : RouterProps) => {
     // State variables for managing user inputs and status
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -37,6 +37,21 @@ const Login = ({ navigation } : RouterProps) => {
         }
     };
 
+    // Function to handle user sign-up
+    const signUp = async () => {
+        setLoading(true);
+        try {
+            // Attempt to sign up with email and password
+            const response = await createUserWithEmailAndPassword(auth, email, password);
+        } catch (error: any) {
+            // Show error modal if sign-up fails
+            setSignUpError(true);
+            // console.log(error);
+        } finally {
+            setLoading(false); // Hide loading indicator
+        }
+    };
+
     return (
         <SafeAreaProvider>
             <SafeAreaView style={styles.container} edges={['left', 'right']}>
@@ -46,11 +61,11 @@ const Login = ({ navigation } : RouterProps) => {
                             <KeyboardAvoidingView behavior='padding'>
                                 {/* App logo */}
                                 <Image style={styles.image} source={Logo2} />
-                                <Text style={{ fontSize: 18, marginBottom: 10, margin: 'auto', textAlign: 'center' }}>
-                                    Welcome back to
+                                <Text style={{ fontSize: 16, marginBottom: 10, margin: 'auto', textAlign: 'center' }}>
+                                    New to PASTA.ai do a quick
                                 </Text>
-                                <Text style={{ fontSize: 21, marginBottom: 20, margin: 'auto', textAlign: 'center' }}>
-                                    PASTA.ai
+                                <Text style={{ fontSize: 20, marginBottom: 20, margin: 'auto', textAlign: 'center' }}>
+                                    Sign Up
                                 </Text>
                                 
                                 {/* Input fields for user name, email, and password */}
@@ -87,16 +102,27 @@ const Login = ({ navigation } : RouterProps) => {
                                         </Pressable>
                                     </View>
                                 </Modal>
+
+                                {/* Modal for sign-up error */}
+                                <Modal isVisible={signUpError} style={styles.ModalStyle} animationInTiming={1} animationOutTiming={1}>
+                                    <View style={styles.View}>
+                                        <Text style={styles.ModalText}>Sign Up Failed</Text>
+                                        <Pressable style={styles.button} onPress={() => setSignUpError(false)}>
+                                            <Text style={styles.buttonText}>Close</Text>
+                                        </Pressable>
+                                    </View>
+                                </Modal>
+
                                 {/* Buttons for login and sign-up */}
                                 <View style={styles.inline}>
-                                    <Pressable style={styles.button} onPress={signIn}>
-                                        <Text style={styles.buttonText}>Login</Text>
+                                    <Pressable style={styles.button} onPress={signUp}>
+                                        <Text style={styles.buttonText}>Sign Up</Text>
                                     </Pressable>
                                 </View>
                                 <View style={styles.inline}>
-                                    <Text style={{ fontSize: 15, marginTop: 20, margin: 'auto' }}> Don't have an account ?</Text>
-                                    <Pressable style={styles.signup} onPress={() => navigation.navigate('Signup')} >
-                                        <Text style={styles.signupText}>Sign Up</Text>
+                                    <Text style={{ fontSize: 15, marginTop: 20, margin: 'auto' }}> Already have an account ?</Text>
+                                    <Pressable style={styles.signup} onPress={() => navigation.navigate('Login')}>
+                                        <Text style={styles.signupText}>Login</Text>
                                     </Pressable>
                                 </View>
                             </KeyboardAvoidingView>
@@ -108,7 +134,7 @@ const Login = ({ navigation } : RouterProps) => {
     );
 };
 
-export default Login;
+export default Signup;
 
 // Styles for the Login component
 const styles = StyleSheet.create({

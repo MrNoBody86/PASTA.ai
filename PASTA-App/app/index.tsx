@@ -1,5 +1,6 @@
 // Importing necessary components and libraries from React Native and other packages
-import { StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, Image, ScrollView } from 'react-native';
+import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from 'react';
 import Login from '@/components/Login';
 import { NavigationContainer, NavigationIndependentTree } from '@react-navigation/native'
@@ -15,12 +16,14 @@ import Task_Manager from '@/components/Task_Manager';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Logo2} from "@/Images";
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
+import Signup from '@/components/Signup';
 
 // Main App component
 export default function App() {
   // Creating stack and drawer navigators
   const Stack = createNativeStackNavigator();
   const Drawer = createDrawerNavigator();
+  const LoginStack = createNativeStackNavigator();
 
   // State to manage the current authenticated user
   const [user, setUser] = useState<User | null>(null);
@@ -57,7 +60,14 @@ export default function App() {
       </View>
     )
   }
-
+  function LoginLayout(){
+    return(
+      <LoginStack.Navigator>
+        <LoginStack.Screen name="Login" component={Login} options={{headerShown:false}}/>
+        <LoginStack.Screen name="Signup" component={Signup} options={{headerShown:false}}/>
+      </LoginStack.Navigator>
+    )
+  }
   // Layout for screens accessible after login, using a drawer navigator
   function InsideLayout(){
     return (
@@ -111,17 +121,21 @@ export default function App() {
   // Main return block for rendering the app
   return (
     <SafeAreaProvider>
-    <SafeAreaView style={{flex: 1}}>
-    <NavigationIndependentTree>
-      <NavigationContainer>
-        <Stack.Navigator>
-          {/* Conditionally rendering screens based on user authentication status */}
-          {user ?(<Stack.Screen name="Inside" component={InsideLayout} options={{ headerShown: false }}/>)
-           : (<Stack.Screen name="Login" component={Login} options={{ headerShown: false }}/>)}
-        </Stack.Navigator>
-      </NavigationContainer>
-    </NavigationIndependentTree>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "black" }}>
+      <NavigationIndependentTree>
+        <NavigationContainer>
+          <Stack.Navigator>
+            {user ? (
+              <Stack.Screen name="Inside" component={InsideLayout} options={{ headerShown: false }} />
+            ) : (
+              <Stack.Screen name="LoginPage" component={LoginLayout} options={{ headerShown: false }} />
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </NavigationIndependentTree>
+      <StatusBar backgroundColor="black" style="light" />
     </SafeAreaView>
-    </SafeAreaProvider>
+  </SafeAreaProvider>
+  
   );
 }
