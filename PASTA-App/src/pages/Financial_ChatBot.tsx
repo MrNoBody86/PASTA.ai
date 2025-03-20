@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import axios from 'axios';
-import ChatBubble from "./ChatBubble";
+import ChatBubble from "../../components/ChatBubble";
 import { speak, isSpeakingAsync, stop } from "expo-speech";
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";

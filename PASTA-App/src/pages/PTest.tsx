@@ -1,13 +1,12 @@
 import React from 'react'
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Pressable, ScrollView } from 'react-native';
-import Option from '../components/Option';
+import Option from '../../components/Option';
 import { useEffect, useState } from 'react';
-import { quizData } from '../questions';
-import Results from '../components/Results';
+import { quizData } from '../../questions';
+import Results from '@/src/pages/Results';
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
 import { NavigationProp } from '@react-navigation/native';
-import Chat from '../components/Chat';
 import { collection, addDoc, serverTimestamp, orderBy, query, getDocs } from 'firebase/firestore';
 
 // Main component for the personality test

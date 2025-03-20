@@ -1,30 +1,31 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import axios from 'axios';
-import ChatBubble from "./ChatBubble";
+import ChatBubble from "../../components/ChatBubble";
 import { speak, isSpeakingAsync, stop } from "expo-speech";
 import { NavigationProp } from '@react-navigation/native';
 import { Logo2 } from '@/Images';
+import { REACT_APP_GEMINI_API_KEY } from '@/constants';
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
-import { FITNESS_API_URL } from '@/constants';
+import { collection, query, where, orderBy, getDocs, limit, addDoc, serverTimestamp, onSnapshot, Timestamp } from "firebase/firestore";
 
-// Main Fitness_Chat component
-export function Fitness_Chat() {
-    // State variables for chat messages, user input, loading status, error messages, and speech status
+// Chat component handles the chat interface and communication with Gemini API and Firebase
+export function Chat() {
+    // State variables to manage chat, user input, loading status, error messages, and speech status
     const [chat, setChat] = useState([]);
     const [userInput, setUserInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const API_KEY = REACT_APP_GEMINI_API_KEY;  // Gemini API key
 
-    // Fetch recent chat messages from Firebase
-    async function getRecentFitnessChatbotMessages(db, userUid, messageLimit) {
-        const messagesRef = collection(db, "users", userUid, "fitnessMessages");
+    // Function to fetch recent messages from Firebase
+    async function getRecentChatbotMessages(db, userUid, messageLimit) {
+        const messagesRef = collection(db, "users", userUid, "geminiMessages");
         const q = query(
             messagesRef,
-            orderBy("timestamp"),
-            limit(messageLimit)
+            orderBy("timestamp"), // Orders messages by timestamp (oldest first)
+            limit(messageLimit)   // Limits the number of messages fetched
         );
         const querySnapshot = await getDocs(q);
         const messages = [];
@@ -35,21 +36,21 @@ export function Fitness_Chat() {
             };
             messages.push(messageData);
         });
-        setChat(messages);
+        setChat(messages);  // Updates the chat state with fetched messages
     }
 
-    // Load messages on component mount
+    // useEffect to fetch messages when the component mounts
     useEffect(() => {
         if(FIREBASE_AUTH.currentUser?.uid){
-                    getRecentFitnessChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
+                    getRecentChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
                 }
                 // console.log("Stored Messages:",message);
-    }, []);
-
-    // Save a message to Firebase
+    }, []);  // Empty dependency array to run only once on mount
+    
+    // Function to add a new message to Firebase
     async function addMessage(db, userUid, sender, text) {
         try {
-            const messagesRef = collection(db, "users", userUid, "fitnessMessages");
+            const messagesRef = collection(db, "users", userUid, "geminiMessages");
             const newMessage = {
                 sender: sender,
                 content: text,
@@ -57,16 +58,16 @@ export function Fitness_Chat() {
             };
             const docRef = await addDoc(messagesRef, newMessage);
             console.log("Document written with ID: ", docRef.id);
-            return docRef;
+            return docRef;  // Returns the document reference after adding the message
         } catch (e) {
             console.error("Error adding document: ", e);
-            throw e;
+            throw e;  // Throws error to be handled by the caller
         }
     }
 
-    // Handle user input and API call
+    // Function to handle user input and send request to Gemini API
     const handleUserInput = async () => {
-        // Update chat with user message
+        // Adds user input to the chat state
         let updatedChat = [
             ...chat,
             {
@@ -74,96 +75,102 @@ export function Fitness_Chat() {
                 parts: [{ text: userInput }],
             },
         ];
-        setLoading(true);
+        
+        setLoading(true);  // Shows loading indicator
 
         try {
-            // Make API call to fetch bot response
-            const response = await axios.get(`${FITNESS_API_URL}/${userInput}`);
-            console.log("Agent Response", response.data['response']);
+            const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
+                {
+                    contents: updatedChat,
+                }
+            );
 
-            if (response.data) {
-                // Update chat with bot response
+            console.log("Gemini Response", response.data);
+
+            const modelResponse = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+            if (modelResponse) {
                 const updatedChatWithModel = [
                     ...updatedChat,
                     {
                         role: 'model',
-                        parts: [{ text: response.data['response'] }],
+                        parts: [{ text: modelResponse }],
                     },
                 ];
-                setChat(updatedChatWithModel);
-
-                // Save both user and bot messages to Firebase
-                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "user", userInput);
-                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", response.data['response']);
-                setUserInput("");
+                setChat(updatedChatWithModel);  // Updates chat state with the model's response
+                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "user", userInput);  // Saves user's message to Firebase
+                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", modelResponse);  // Saves model's response to Firebase
+                setUserInput("");  // Clears user input
                 setError("");
             }
-        } catch (error) {
-            console.log("Error calling Fitness API", error);
+
+        } catch (error: any) {
+            console.log("Error calling Gemini", error);
+            console.log("Error response", error.response);
             setError("An Error occurred, Please try again");
         } finally {
-            setLoading(false);
+            setLoading(false);  // Hides loading indicator
         }
-    };
+    }
 
-    // Handle speech synthesis for chat messages
+    // Function to handle text-to-speech functionality
     const handleSpeech = async (text) => {
         if (isSpeaking) {
-            stop();
+            stop();  // Stops speech if already speaking
             setIsSpeaking(false);
         } else {
             if (!(await isSpeakingAsync())) {
-                speak(text);
+                speak(text);  // Converts text to speech
                 setIsSpeaking(true);
-            }
+            }            
         }
-    };
+    }
 
-    // Render each chat message
+    // Renders each chat message using ChatBubble component
     const renderChatItem = ({ item }) => {
         return (
-            <ChatBubble
-                role={item.role}
-                text={item.parts[0].text}
+            <ChatBubble 
+                role={item.role} 
+                text={item.parts[0].text} 
                 onSpeech={() => handleSpeech(item.parts[0].text)}
             />
         );
     };
 
-    // Main render function
+    // Main UI of the Chat component
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Fitness ChatBot</Text>
+            <Text style={styles.title}>Gemini ChatBot</Text>
             <FlatList
                 data={chat}
                 renderItem={renderChatItem}
                 keyExtractor={(item, index) => index.toString()}
                 contentContainerStyle={styles.chatContainer}
-            />
+            /> 
             <View style={styles.inputContainer}>
-                <TextInput
+                <TextInput 
                     style={styles.input}
                     value={userInput}
                     onChangeText={setUserInput}
                     placeholder="Type a message"
                 />
-                <TouchableOpacity
+                <TouchableOpacity 
                     style={[styles.button, { backgroundColor: userInput ? '#007AFF' : '#8bbff7' }]}
-                    onPress={handleUserInput}
+                    onPress={handleUserInput} 
                     disabled={!userInput}
                 >
                     <Text style={styles.buttonText}>Send</Text>
                 </TouchableOpacity>
             </View>
-            {loading && <ActivityIndicator size="large" color="#0000ff" />}
-            {error && <Text style={styles.error}>{error}</Text>}
+            {loading && <ActivityIndicator size="large" color="#0000ff" />}  
+            {error && <Text style={styles.error}>{error}</Text>} 
         </View>
     );
 }
 
-export default Fitness_Chat;
+export default Chat;
 
-// Styles for the component
+// Styles for the Chat component
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -183,7 +190,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     inputContainer: {
-        flexDirection: 'row',
+        flexDirection: 'row', 
         alignItems: 'center',
         marginTop: 10,
     },

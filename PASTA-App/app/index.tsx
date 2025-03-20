@@ -2,21 +2,21 @@
 import { StyleSheet, Text, TouchableOpacity, View, Image, ScrollView } from 'react-native';
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from 'react';
-import Login from '@/components/Login';
+import Login from '@/src/pages/Login';
 import { NavigationContainer, NavigationIndependentTree } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
-import PTest from "@/components/PTest";
-import Chat from "@/components/Chat";
-import Financial_Chat from '@/components/Financial_ChatBot';
-import Fitness_Chat from '@/components/Fitness_ChatBot';
-import Task_Manager from '@/components/Task_Manager';
+import PTest from "@/src/pages/PTest";
+import Chat from "@/src/pages/Chat";
+import Financial_Chat from '@/src/pages/Financial_ChatBot';
+import Fitness_Chat from '@/src/pages/Fitness_ChatBot';
+import Task_Manager from '@/src/pages/Task_Manager';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Logo2} from "@/Images";
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
-import Signup from '@/components/Signup';
+import Signup from '@/src/pages/Signup';
 
 // Main App component
 export default function App() {
