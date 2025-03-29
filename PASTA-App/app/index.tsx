@@ -13,6 +13,7 @@ import Chat from "@/src/pages/Chat";
 import Financial_Chat from '@/src/pages/Financial_ChatBot';
 import Fitness_Chat from '@/src/pages/Fitness_ChatBot';
 import Task_Manager from '@/src/pages/Task_Manager';
+import Task_Inside from '@/src/pages/Task_Inside';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {Logo2} from "@/Images";
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
@@ -24,6 +25,7 @@ export default function App() {
   const Stack = createNativeStackNavigator();
   const Drawer = createDrawerNavigator();
   const LoginStack = createNativeStackNavigator();
+  const TaskStack = createNativeStackNavigator();
 
   // State to manage the current authenticated user
   const [user, setUser] = useState<User | null>(null);
@@ -65,6 +67,14 @@ export default function App() {
       <LoginStack.Navigator>
         <LoginStack.Screen name="Login" component={Login} options={{headerShown:false}}/>
         <LoginStack.Screen name="Signup" component={Signup} options={{headerShown:false}}/>
+      </LoginStack.Navigator>
+    )
+  }
+  function TaskLayout(){
+    return(
+      <LoginStack.Navigator>
+        <LoginStack.Screen name="Task" component={Task_Manager} options={{headerShown: false}} />
+        <LoginStack.Screen name="TaskView" component={Task_Inside} options={{headerShown: false}} />
       </LoginStack.Navigator>
     )
   }
@@ -110,7 +120,7 @@ export default function App() {
           />
           <Drawer.Screen 
             name="Task Manager" 
-            component={Task_Manager} 
+            component={TaskLayout} 
             options={{drawerLabel: "Task Manager",
                       headerTitle: "Task Manager", 
                       drawerIcon: ({size, color}) => (<Ionicons name="clipboard-outline" color={color} size={size} />)}}
