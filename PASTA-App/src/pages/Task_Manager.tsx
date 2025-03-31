@@ -8,42 +8,97 @@ interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const Task_Manager = ({ navigation } : RouterProps) => {
-    const [isChecked, setIsChecked] = useState(true)
-    const iconName = isChecked ? 'checkbox-marked' : 'checkbox-blank-outline'
+const Task_Manager = ({ navigation, route } : RouterProps) => {
+    const [isChecked, setIsChecked] = useState(true);
+    const iconName = isChecked ? 'checkbox-marked' : 'checkbox-blank-outline';
+    
+    const taskDetails = [{
+      'taskId': '001',
+      'taskName': 'MyTask',
+      'taskDescription': 'Task Description',
+      'taskCategory': 'Personal',
+      'taskPriority': 'Medium',
+      'taskDate': new Date(),
+      'taskTime': new Date(),
+      'subTasks': [{'key': 'subTask1'}, {'key': 'subTask2'}]
+    }, {
+      'taskId': '002',
+      'taskName': 'Do code',
+      'taskDescription': 'Task Description',
+      'taskCategory': 'Personal',
+      'taskPriority': 'Medium',
+      'taskDate': new Date(),
+      'taskTime': new Date(),
+      'subTasks': [{'key': 'subTask1'}, {'key': 'subTask2'}]
+    }, {
+      'taskId': '003',
+      'taskName': 'Get shit done',
+      'taskDescription': 'Task Description',
+      'taskCategory': 'Personal',
+      'taskPriority': 'Medium',
+      'taskDate': new Date(),
+      'taskTime': new Date(),
+      'subTasks': [{'key': 'subTask1'}, {'key': 'subTask2'}]
+    },]
+    
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Your Tasks</Text>
-      <ScrollView style={{height: '93%'}}>
-      <View style={styles.taskContainer}>
+      <ScrollView style={styles.taskRows}>
+      {taskDetails.map((item, index) => (
+        <View style={styles.taskContainer}>
         <Pressable style={styles.checkbox} onPress={() => setIsChecked(!isChecked)}>
             <MaterialCommunityIcons name={iconName} size={25} color="black" />
         </Pressable>
         <View style={{paddingLeft: 10}}>
-            <Text style={styles.taskTitle}>MyTask</Text>
+            <Text style={styles.taskTitle}>{item.taskName}</Text>
             <View style={styles.taskDetails}>
-                <Text style={styles.date}>Mar 21</Text>
-                <Text>Category</Text>
-                <Text>Priority</Text>
+                <Text style={styles.date}>{item.taskDate.toLocaleDateString()}</Text>
+                <Text>{item.taskCategory}</Text>
+                <Text>{item.taskPriority}</Text>
             </View>
-            
-        </View>
-        
-        <View style={styles.viewTask}>
-            <MaterialCommunityIcons name='clipboard-outline' size={30} color="black"/>
         </View>
 
-        <View style={styles.deleteTask}>
-            <MaterialCommunityIcons name="delete-outline" size={30} color="black"/>
-        </View>
+        <Pressable style={styles.viewTaskButton}  onPress={() => {navigation.navigate('TaskView', {
+          taskName: item.taskName,
+          taskDescription: item.taskDescription,
+          taskCategory: item.taskCategory,
+          taskPriority: item.taskPriority,
+          taskDate: item.taskDate,
+          taskTime: item.taskTime,
+          subTasks: item.subTasks
+        })}}>
+          <View style={styles.viewTask}>
+              <MaterialCommunityIcons name='clipboard-outline' size={30} color="black"/>
+          </View>
+        </Pressable>
+        
+        <Pressable style={styles.deleteTaskButton}>
+          <View style={styles.deleteTask}>
+              <MaterialCommunityIcons name="delete-outline" size={25} color="black"/>
+          </View>
+        </Pressable>
+
       </View>
+      ))}
       </ScrollView>
       <View style={styles.addTask}>
-        <Pressable style={styles.addTaskButton} onPress={() => navigation.navigate('TaskView')}>
+        <Pressable style={styles.addTaskButton} onPress={() => {navigation.navigate('TaskView', {
+          taskId: 'new',
+          taskName: 'MyTasks',
+          taskDescription: 'Task Description',
+          taskCategory: '1',
+          taskPriority: '2',
+          taskDate: new Date(),
+          taskTime: new Date(),
+          subTasks: [{'key': 'subTask1'}, {'key': 'subTask2'}]
+        })}}>
             <MaterialCommunityIcons name="plus" size={25} color='black'/>
         </Pressable>
       </View>
+
     </SafeAreaView>
+
     
   )
 }
@@ -55,10 +110,13 @@ const styles = StyleSheet.create({
     header: {
         fontSize: 24,
         fontWeight: 'bold',
-        paddingBottom: 10
+        paddingBottom: 10,
+    },
+    taskRows:{
+      height: '82%'
     },
     taskContainer: {
-        height: 90,
+        height: 85,
         backgroundColor: '#fff',
         borderRadius: 20,
         flexDirection: 'row',
@@ -75,17 +133,33 @@ const styles = StyleSheet.create({
         gap: 10
     },
     viewTask: {
-        width: 50,
-        height: 50,
-        marginTop: 30,
-        marginBottom: 20,
-        marginLeft: 20
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     deleteTask: {
-        width: 50,
-        height: 50,
-        marginTop: 30,
-        marginBottom: 20,
+        width: 25,
+        height: 25,
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    viewTaskButton: {
+        width: 45, 
+        height: 45, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        margin: 'auto', 
+        borderRadius: 20,
+        marginLeft: 20,
+    },
+    deleteTaskButton: {
+        width: 30, 
+        height: 30, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        margin: 'auto', 
+        borderRadius: 20,
     },
     checkbox: {
         marginTop: 'auto',
@@ -94,7 +168,7 @@ const styles = StyleSheet.create({
     },
     addTask: {
         position: 'absolute',
-        bottom: 20,
+        bottom: -53,
         right: 20,
         width: 60,
         height: 60,

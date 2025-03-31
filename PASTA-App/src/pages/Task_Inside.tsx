@@ -5,6 +5,11 @@ import { Pressable, ScrollView, TextInput } from 'react-native-gesture-handler'
 import { SelectCountry } from 'react-native-element-dropdown'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
+import { NavigationProp } from '@react-navigation/native'
+
+interface RouterProps {
+  navigation: NavigationProp<any, any>;
+}
 
 const category = [
     {
@@ -67,23 +72,34 @@ const priority = [
     },
   ];
 
-const Inside_Task = () => {
-    const [categoryNo, setCategoryNo] = useState('1');
-    const [priorityNo, setPriorityNo] = useState('2');
-    const [date, setDate] = useState(new Date());
-    const [show, setShow] = useState(false);
-    const [mode, setMode] = useState('date')
-    const [subTask, setSubTask] = useState([]);
+const Inside_Task = ({ route, navigation }) => {
+    const { taskId, taskName, taskDescription, taskCategory, taskPriority, taskDate, taskTime, subTasks } = route.params;
+    const [categoryNo, setCategoryNo] = useState(taskCategory);
+    const [priorityNo, setPriorityNo] = useState(taskPriority);
+    const [date, setDate] = useState(taskDate);
+    const [time, setTime] = useState(taskTime);
+    const [showDate, setShowDate] = useState(false);
+    const [showTime, setShowTime] = useState(false);
+    const [subTask, setSubTask] = useState(subTasks);
     const [subTaskText, setSubTaskText] = useState('');
 
-    const onChange = (e, selectedDate) => {
+    const onChangeDate = (e, selectedDate) => {
         setDate(selectedDate);
-        setShow(false);
+        setShowDate(false);
+    }
+    const onChangeTime = (e, selectedDate) => {
+        setTime(selectedDate);
+        setShowTime(false);
     }
 
-    const showMode = (modeToShow) => {
-        setShow(true);
-        setMode(modeToShow);
+    const showDatePicker = () => {
+        setShowDate(true);
+        setShowTime(false);
+    }
+
+    const showTimePicker = () => {
+        setShowTime(true);
+        setShowDate(false);
     }
 
     const addSubTasks = (title) => {
@@ -91,12 +107,9 @@ const Inside_Task = () => {
         if (title.trim() === '') return;
         setSubTask([...subTask, {'key': title}]);
         setSubTaskText('');
-        console.log(subTask);
+        console.log(subTask); 
+        console.log(date);
     }
-
-    const getItem = (data, index) => data[index];
-
-    const getItemCount = (data) => data.length;
 
     return (
       <ScrollView>
@@ -104,28 +117,36 @@ const Inside_Task = () => {
         <SafeAreaView style={styles.container}>
             <View style={styles.title}>
                 <Text style={{fontSize: 18, fontWeight: 'bold'}}>Task</Text>
-                <TextInput style={{backgroundColor:'white', borderRadius: 10}} placeholder='What do you need to do'/>
+                <TextInput style={{backgroundColor:'white', borderRadius: 10}} placeholder='What do you need to do' value={taskName} />
             </View>
             <View style={styles.description}>
                 <Text style={{fontSize: 18, fontWeight: 'bold', paddingBottom: 5}}>Description</Text>
-                <TextInput style={{backgroundColor:'white', height: 70, borderRadius: 10}} />
+                <TextInput style={{backgroundColor:'white', height: 70, borderRadius: 10}} value={taskDescription} />
             </View> 
             <View style={styles.datetime}>
                 <Text style={{fontSize: 18, fontWeight: 'bold'}}>Date</Text>
-                <Pressable style={styles.dateButton} onPress={() => showMode('date')}>
+                <Pressable style={styles.dateButton} onPress={() => showDatePicker()}>
                     <Text style={{fontSize: 16}}>{date.toLocaleDateString()}</Text>
                 </Pressable>
                 <Text style={{fontSize: 18, fontWeight: 'bold'}}>Time</Text>
-                <Pressable style={styles.dateButton} onPress={() => showMode('time')}>
-                    <Text style={{fontSize: 16}}>{date.toLocaleTimeString()}</Text>
+                <Pressable style={styles.dateButton} onPress={() => showTimePicker()}>
+                    <Text style={{fontSize: 16}}>{time.toLocaleTimeString()}</Text>
                 </Pressable>
                 {
-                    show && (
+                    showDate && (
                         <DateTimePicker
                         value={date}
-                        mode={mode}
+                        mode={'date'}
                         is24Hour={false}
-                        onChange={onChange}
+                        onChange={onChangeDate}
+                />)}
+                {
+                    showTime && (
+                        <DateTimePicker
+                        value={time}
+                        mode={'time'}
+                        is24Hour={false}
+                        onChange={onChangeTime}
                 />)}
             </View>
             <View style={styles.dropdownSelect}>
