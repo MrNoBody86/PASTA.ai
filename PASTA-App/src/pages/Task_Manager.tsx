@@ -46,7 +46,7 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
       <Text style={styles.header}>Your Tasks</Text>
       <ScrollView style={styles.taskRows}>
       {taskDetails.map((item, index) => (
-        <View style={styles.taskContainer}>
+        <View key={index} style={styles.taskContainer}>
         <Pressable style={styles.checkbox} onPress={() => setIsChecked(!isChecked)}>
             <MaterialCommunityIcons name={iconName} size={25} color="black" />
         </Pressable>
@@ -85,13 +85,13 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
       <View style={styles.addTask}>
         <Pressable style={styles.addTaskButton} onPress={() => {navigation.navigate('TaskView', {
           taskId: 'new',
-          taskName: 'MyTasks',
-          taskDescription: 'Task Description',
+          taskName: '',
+          taskDescription: '',
           taskCategory: '1',
           taskPriority: '2',
           taskDate: new Date(),
           taskTime: new Date(),
-          subTasks: [{'key': 'subTask1'}, {'key': 'subTask2'}]
+          subTasks: [{'key': 'subTask1'}]
         })}}>
             <MaterialCommunityIcons name="plus" size={25} color='black'/>
         </Pressable>

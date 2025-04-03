@@ -157,7 +157,7 @@ export function Chat() {
                 <TouchableOpacity 
                     style={[styles.button, { backgroundColor: userInput ? '#007AFF' : '#8bbff7' }]}
                     onPress={handleUserInput} 
-                    disabled={!userInput}
+                    disabled={!userInput.trim()}
                 >
                     <Text style={styles.buttonText}>Send</Text>
                 </TouchableOpacity>
