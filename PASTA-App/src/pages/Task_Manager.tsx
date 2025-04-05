@@ -69,14 +69,14 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
           </View>
   
           <Pressable style={styles.viewTaskButton}  onPress={() => {navigation.navigate('TaskView', {
-            taskId : item.taskId,
-            taskName: item.taskName,
-            taskDescription: item.taskDescription,
-            taskCategory: item.taskCategory,
-            taskPriority: item.taskPriority,
-            taskDate: item.taskDate,
-            taskTime: item.taskTime,
-            subTasks: item.subTasks
+            INtaskId : item.taskId,
+            INtaskName: item.taskName,
+            INtaskDescription: item.taskDescription,
+            INtaskCategory: item.taskCategory,
+            INtaskPriority: item.taskPriority,
+            INtaskDate: item.taskDate,
+            INtaskTime: item.taskTime,
+            INsubTasks: item.subTasks
           })}}>
             <View style={styles.viewTask}>
                 <MaterialCommunityIcons name='clipboard-outline' size={30} color="black"/>
@@ -96,14 +96,14 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
       </ScrollView>
       <View style={styles.addTask}>
         <Pressable style={styles.addTaskButton} onPress={() => {navigation.navigate('TaskView', {
-          taskId: '',
-          taskName: '',
-          taskDescription: '',
-          taskCategory: '1',
-          taskPriority: '2',
-          taskDate: new Date(),
-          taskTime: new Date(),
-          subTasks: [{'key': 'subTask1'}]
+          INtaskId: '',
+          INtaskName: '',
+          INtaskDescription: '',
+          INtaskCategory: '1',
+          INtaskPriority: '2',
+          INtaskDate: new Date(),
+          INtaskTime: new Date(),
+          INsubTasks: [{'key': 'subTask1'}]
         })}}>
             <MaterialCommunityIcons name="plus" size={25} color='black'/>
         </Pressable>

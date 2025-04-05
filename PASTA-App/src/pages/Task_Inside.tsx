@@ -75,14 +75,17 @@ const priority = [
   ];
 
 const Inside_Task = ({ route, navigation }) => {
-    var { taskId, taskName, taskDescription, taskCategory, taskPriority, taskDate, taskTime, subTasks } = route.params;
-    const [categoryNo, setCategoryNo] = useState(taskCategory);
-    const [priorityNo, setPriorityNo] = useState(taskPriority);
-    const [date, setDate] = useState(taskDate);
-    const [time, setTime] = useState(taskTime);
+    var { INtaskId, INtaskName, INtaskDescription, INtaskCategory, INtaskPriority, INtaskDate, INtaskTime, INsubTasks } = route.params;
+    const [taskId, setTaskId] = useState(INtaskId);
+    const [taskName, setTaskName] = useState(INtaskName);
+    const [taskDescription, setTaskDescription] = useState(INtaskDescription);
+    const [categoryNo, setCategoryNo] = useState(INtaskCategory);
+    const [priorityNo, setPriorityNo] = useState(INtaskPriority);
+    const [date, setDate] = useState(INtaskDate);
+    const [time, setTime] = useState(INtaskTime);
     const [showDate, setShowDate] = useState(false);
     const [showTime, setShowTime] = useState(false);
-    const [subTask, setSubTask] = useState(subTasks);
+    const [subTask, setSubTask] = useState(INsubTasks);
     const [subTaskText, setSubTaskText] = useState('');
     const [taskAIText, setTaskAIText] = useState('');
 
@@ -126,11 +129,11 @@ const Inside_Task = ({ route, navigation }) => {
       //   console.log('No response from AI agent');
       // }
       try {
-        taskName = AIResponse['taskName'];
-        taskDescription = AIResponse['taskDescription'];
-        taskCategory = AIResponse['taskCategory'];
-        taskPriority = AIResponse['taskPriority'];
-        subTasks = AIResponse['subTasks']
+        setTaskName(AIResponse['taskName']);
+        setTaskDescription(AIResponse['taskDescription']);
+        setCategoryNo(AIResponse['taskCategory']);
+        setPriorityNo(AIResponse['taskPriority']);
+        setSubTask(AIResponse['subTasks']);
       } catch (error) {
           console.error("Invalid JSON format:", error);
       }    
