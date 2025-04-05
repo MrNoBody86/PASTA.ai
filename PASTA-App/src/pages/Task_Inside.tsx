@@ -75,7 +75,7 @@ const priority = [
   ];
 
 const Inside_Task = ({ route, navigation }) => {
-    const { taskId, taskName, taskDescription, taskCategory, taskPriority, taskDate, taskTime, subTasks } = route.params;
+    var { taskId, taskName, taskDescription, taskCategory, taskPriority, taskDate, taskTime, subTasks } = route.params;
     const [categoryNo, setCategoryNo] = useState(taskCategory);
     const [priorityNo, setPriorityNo] = useState(taskPriority);
     const [date, setDate] = useState(taskDate);
@@ -85,7 +85,6 @@ const Inside_Task = ({ route, navigation }) => {
     const [subTask, setSubTask] = useState(subTasks);
     const [subTaskText, setSubTaskText] = useState('');
     const [taskAIText, setTaskAIText] = useState('');
-    const [taskAITextResponse, setTaskAITextResponse] = useState('');
 
     const onChangeDate = (e, selectedDate) => {
         setDate(selectedDate);
@@ -118,16 +117,20 @@ const Inside_Task = ({ route, navigation }) => {
     const task_agent = async () => {
       console.log(taskAIText)
       const response = await axios.get(`${TASK_AGENT_URL}/${taskAIText}`);
-      console.log(response.data)
-      if (response.data) {
-        setTaskAITextResponse(response.data);
-        console.log(typeof(taskAITextResponse))
-      } else {
-        console.log('No response from AI agent');
-      }
+      console.log(response.data);
+      var AIResponse = response.data;
+      // if (response.data) {
+      //   setTaskAITextResponse(response.data);
+      //   console.log(typeof(taskAITextResponse))
+      // } else {
+      //   console.log('No response from AI agent');
+      // }
       try {
-        const jsonObject = JSON.parse(taskAITextResponse);
-        console.log(jsonObject);
+        taskName = AIResponse['taskName'];
+        taskDescription = AIResponse['taskDescription'];
+        taskCategory = AIResponse['taskCategory'];
+        taskPriority = AIResponse['taskPriority'];
+        subTasks = AIResponse['subTasks']
       } catch (error) {
           console.error("Invalid JSON format:", error);
       }    
@@ -137,15 +140,18 @@ const Inside_Task = ({ route, navigation }) => {
       <ScrollView>
         <SafeAreaProvider>
         <SafeAreaView style={styles.container}>
-            <View>
-              <Text style={{fontSize: 16, fontWeight: 'bold'}}>AI Box</Text>
-              <View style={{flexDirection: 'row', gap: 10}}>
-                <TextInput style={{backgroundColor: 'white', borderRadius: 10, width: '90%'}} placeholder='Auto-fill your task Details' onChangeText={setTaskAIText} value={taskAIText}></TextInput>
-                <Pressable style={{backgroundColor: 'black', borderRadius: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center'}} onPress={task_agent}>
-                  <MaterialCommunityIcons name="send" size={25} color='white'/>
-                </Pressable>
-              </View>      
-            </View>
+            {!taskId && (
+              <View>
+                <Text style={{fontSize: 16, fontWeight: 'bold'}}>AI Box</Text>
+                <View style={{flexDirection: 'row', gap: 10}}>
+                  <TextInput style={{backgroundColor: 'white', borderRadius: 10, width: '90%'}} placeholder='Auto-fill your task Details' onChangeText={setTaskAIText} value={taskAIText}></TextInput>
+                  <Pressable style={{backgroundColor: 'black', borderRadius: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center'}} onPress={task_agent}>
+                    <MaterialCommunityIcons name="send" size={25} color='white'/>
+                  </Pressable>
+                </View>      
+              </View>
+            )}
+            
             <View style={styles.title}>
                 <Text style={{fontSize: 18, fontWeight: 'bold'}}>Task</Text>
                 <TextInput style={{backgroundColor:'white', borderRadius: 10}} placeholder='What do you need to do' value={taskName} />
