@@ -24,11 +24,11 @@ export function Fitness_Chat() {
         const messagesRef = collection(db, "users", userUid, "fitnessMessages");
         const q = query(
             messagesRef,
-            orderBy("timestamp"),
+            orderBy("timestamp", "desc"),
             limit(messageLimit)
         );
         const querySnapshot = await getDocs(q);
-        const messages = [];
+        var messages = [];
         querySnapshot.forEach((doc) => {
             const messageData = {
                 parts: [{ text: doc.data().content }],
@@ -36,6 +36,7 @@ export function Fitness_Chat() {
             };
             messages.push(messageData);
         });
+        messages = messages.reverse();
         setChat(messages);
     }
 

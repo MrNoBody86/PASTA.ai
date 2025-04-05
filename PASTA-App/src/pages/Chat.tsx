@@ -24,11 +24,11 @@ export function Chat() {
         const messagesRef = collection(db, "users", userUid, "geminiMessages");
         const q = query(
             messagesRef,
-            orderBy("timestamp"), // Orders messages by timestamp (oldest first)
+            orderBy("timestamp", "desc"), // Orders messages by timestamp (oldest first)
             limit(messageLimit)   // Limits the number of messages fetched
         );
         const querySnapshot = await getDocs(q);
-        const messages = [];
+        var messages = [];
         querySnapshot.forEach((doc) => {
             const messageData = {
                 parts: [{ text: doc.data().content }],
@@ -36,6 +36,7 @@ export function Chat() {
             };
             messages.push(messageData);
         });
+        messages = messages.reverse();  // Reverses the order to show the latest messages at the bottom
         setChat(messages);  // Updates the chat state with fetched messages
     }
 
