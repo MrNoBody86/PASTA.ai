@@ -1,5 +1,6 @@
 // Import necessary components and libraries from React Native and Expo
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 import React from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -15,7 +16,7 @@ const ChatBubble = ({ role, text, onSpeech }) => {
         styles.chatItem,
         role === "user" ? styles.userChatItem : styles.modelChatItem,  // Apply different styles based on the sender
       ]}>
-      <Text style={styles.chatText}>{text}</Text>
+      <Markdown style={markdownStyles}>{text}</Markdown>
       
       {/* Show speaker icon for model messages to enable text-to-speech */}
       {role === "model" && (
@@ -59,3 +60,26 @@ const styles = StyleSheet.create({
         bottom: 2,
     },
 });
+
+const markdownStyles = {
+  body: {
+    color: "white",
+    fontSize: 14,
+  },
+  bullet_list: {
+    marginVertical: 4,
+  },
+  list_item: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  list_item_content: {
+    flex: 1,
+    color: 'white',
+  },
+  strong: {
+    fontWeight: 'bold',
+    color: 'white',
+  },
+};
+
