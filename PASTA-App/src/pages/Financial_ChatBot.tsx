@@ -22,11 +22,11 @@ export function Financial_Chat() {
         const messagesRef = collection(db, "users", userUid, "financeMessages");
         const q = query(
             messagesRef,
-            orderBy("timestamp"),  // Order messages by timestamp in ascending order
+            orderBy("timestamp", "desc"),  // Order messages by timestamp in ascending order
             limit(messageLimit)     // Limit the number of messages retrieved
         );
         const querySnapshot = await getDocs(q);
-        const messages = [];
+        var messages = [];
 
         // Extract message data and format it for display
         querySnapshot.forEach((doc) => {
@@ -38,6 +38,7 @@ export function Financial_Chat() {
             }
            messages.push(messageData);
         });
+        messages = messages.reverse();  // Reverse the order to show the latest messages at the bottom
         setChat(messages);  // Update chat state with retrieved messages
     }
 
