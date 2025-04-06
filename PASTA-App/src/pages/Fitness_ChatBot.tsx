@@ -44,8 +44,8 @@ export function Fitness_Chat() {
     // Load messages on component mount
     useEffect(() => {
         if(FIREBASE_AUTH.currentUser?.uid){
-                    getRecentFitnessChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
-                }
+            getRecentFitnessChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
+        }
                 // console.log("Stored Messages:",message);
     }, []);
 

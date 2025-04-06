@@ -1,8 +1,10 @@
 import { View, Text, StyleSheet ,SafeAreaView, Pressable } from 'react-native'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { ScrollView } from 'react-native-gesture-handler'
 import { NavigationProp } from '@react-navigation/native'
+import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
+import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig'
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -10,6 +12,37 @@ interface RouterProps {
 
 const Task_Manager = ({ navigation, route } : RouterProps) => {
     const [checkedTasks, setCheckedTasks] = useState<{ [key: string]: boolean }>({});
+    const [allTasks, setAllTasks] = useState([]);
+
+    async function getTaskDetailsFromFireBase(db, userUid, messageLimit) {
+        const messagesRef = collection(db, "users", userUid, "tasks");
+        const q = query(
+            messagesRef,
+            orderBy("timestamp", "asc"),
+            limit(messageLimit)
+        );
+        const querySnapshot = await getDocs(q);
+        const fetchedTasks = [];
+        querySnapshot.forEach((doc) => {
+            const taskData = {
+                taskName: doc.data().taskName,
+                taskDescription: doc.data().taskDescription,
+                taskCategory: doc.data().taskCategory,
+                taskPriority: doc.data().taskPriority,
+                taskDate: doc.data().taskDate.toDate(),
+                taskTime: doc.data().taskTime.toDate(),
+                subTasks: doc.data().subTasks,
+            };
+            fetchedTasks.push(taskData);
+            });
+            setAllTasks(fetchedTasks);
+        }
+
+    useEffect(() => {
+      if (FIREBASE_AUTH.currentUser?.uid) {
+        getTaskDetailsFromFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
+      }
+    })
 
     const toggleCheckbox = (taskId: string) => {
       setCheckedTasks((prev) => ({
@@ -46,12 +79,17 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
       'taskTime': new Date(),
       'subTasks': [{'key': 'subTask1'}, {'key': 'subTask2'}]
     },]
+
+    const deleteTasks = (taskId, taskIndex) => {
+      taskDetails.splice(taskIndex, 1);
+    }
     
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Your Tasks</Text>
       <ScrollView style={styles.taskRows}>
-      {taskDetails.map((item, index) => {
+      {allTasks.map((item, index) => {
+
         const isChecked = checkedTasks[item.taskId] || false;
         const iconName = isChecked ? 'checkbox-marked' : 'checkbox-blank-outline';
         return (
