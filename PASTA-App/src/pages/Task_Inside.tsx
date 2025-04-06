@@ -7,66 +7,68 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { NavigationProp } from '@react-navigation/native'
 import { TASK_AGENT_URL } from '@/constants'
+import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
+import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import axios from 'axios';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
 }
 
-const category = [
+const CATEGORY = [
     {
-      value: '1',
+      value: 'Personal',
       label: 'Personal',
       image: {
         uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
       }
     },
     {
-      value: '2',
+      value: 'Work',
       label: 'Work',
       image: {
         uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
       }
     },
     {
-      value: '3',
+      value: 'Shopping',
       label: 'Shopping',
       image: {
         uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
       }
     },
     {
-      value: '4',
+      value: 'Health',
       label: 'Health',
       image: {
         uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
       }
     },
     {
-      value: '5',
+      value: 'Other',
       label: 'Other',
       image: {
         uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
       }
     },
   ];
-const priority = [
+const PRIORITY = [
     {
-      value: '1',
+      value: 'Low',
       label: 'Low',
       image: {
         uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
       }
     },
     {
-      value: '2',
+      value: 'Medium',
       label: 'Medium',
       image: {
         uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
       }
     },
     {
-      value: '3',
+      value: 'High',
       label: 'High',
       image: {
         uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
@@ -79,8 +81,8 @@ const Inside_Task = ({ route, navigation }) => {
     const [taskId, setTaskId] = useState(INtaskId);
     const [taskName, setTaskName] = useState(INtaskName);
     const [taskDescription, setTaskDescription] = useState(INtaskDescription);
-    const [categoryNo, setCategoryNo] = useState(INtaskCategory);
-    const [priorityNo, setPriorityNo] = useState(INtaskPriority);
+    const [category, setCategory] = useState(INtaskCategory);
+    const [priority, setPriority] = useState(INtaskPriority);
     const [date, setDate] = useState(INtaskDate);
     const [time, setTime] = useState(INtaskTime);
     const [showDate, setShowDate] = useState(false);
@@ -117,22 +119,39 @@ const Inside_Task = ({ route, navigation }) => {
         console.log(date);
     }
 
+    async function addTaskToFireBase(db, userUid, taskName, taskDescription, taskCategory, taskPriority, taskDate, taskTime, subTasks) {
+      try {
+          const messagesRef = collection(db, "users", userUid, "tasks");
+          const newMessage = {
+              taskName: taskName,
+              taskDescription: taskDescription,
+              taskCategory: taskCategory,
+              taskPriority: taskPriority,
+              taskDate: taskDate,
+              taskTime: taskTime,
+              subTasks: subTasks,
+              timestamp: serverTimestamp(),
+          };
+          const docRef = await addDoc(messagesRef, newMessage);
+          console.log("Document written with ID: ", docRef.id);
+          navigation.navigate('Task')
+          return docRef;
+          } catch (e) {
+            console.error("Error adding document: ", e);
+            throw e;
+          }
+    }
+
     const task_agent = async () => {
       console.log(taskAIText)
       const response = await axios.get(`${TASK_AGENT_URL}/${taskAIText}`);
       console.log(response.data);
       var AIResponse = response.data;
-      // if (response.data) {
-      //   setTaskAITextResponse(response.data);
-      //   console.log(typeof(taskAITextResponse))
-      // } else {
-      //   console.log('No response from AI agent');
-      // }
       try {
         setTaskName(AIResponse['taskName']);
         setTaskDescription(AIResponse['taskDescription']);
-        setCategoryNo(AIResponse['taskCategory']);
-        setPriorityNo(AIResponse['taskPriority']);
+        setCategory(AIResponse['taskCategory']);
+        setPriority(AIResponse['taskPriority']);
         setSubTask(AIResponse['subTasks']);
       } catch (error) {
           console.error("Invalid JSON format:", error);
@@ -157,11 +176,11 @@ const Inside_Task = ({ route, navigation }) => {
             
             <View style={styles.title}>
                 <Text style={{fontSize: 18, fontWeight: 'bold'}}>Task</Text>
-                <TextInput style={{backgroundColor:'white', borderRadius: 10}} placeholder='What do you need to do' value={taskName} />
+                <TextInput style={{backgroundColor:'white', borderRadius: 10}} placeholder='What do you need to do' value={taskName} onChangeText={setTaskName} />
             </View>
             <View style={styles.description}>
                 <Text style={{fontSize: 18, fontWeight: 'bold', paddingBottom: 5}}>Description</Text>
-                <TextInput style={{backgroundColor:'white', height: 70, borderRadius: 10}} value={taskDescription} />
+                <TextInput style={{backgroundColor:'white', height: 70, borderRadius: 10}} value={taskDescription} onChangeText={setTaskDescription}/>
             </View> 
             <View style={styles.datetime}>
                 <Text style={{fontSize: 18, fontWeight: 'bold'}}>Date</Text>
@@ -199,15 +218,15 @@ const Inside_Task = ({ route, navigation }) => {
                         imageStyle={styles.imageStyle}
                         iconStyle={styles.iconStyle}
                         maxHeight={200}
-                        value={categoryNo}
-                        data={category}
+                        value={category}
+                        data={CATEGORY}
                         valueField="value"
                         labelField="label"
                         imageField="image"
                         placeholder="Select Category"
                         searchPlaceholder="Search..."
                         onChange={e => {
-                        setCategoryNo(e.value);
+                        setCategory(e.value);
                         }}
                     />
                 </View>
@@ -220,15 +239,15 @@ const Inside_Task = ({ route, navigation }) => {
                         imageStyle={styles.imageStyle}
                         iconStyle={styles.iconStyle}
                         maxHeight={200}
-                        value={priorityNo}
-                        data={priority}
+                        value={priority}
+                        data={PRIORITY}
                         valueField="value"
                         labelField="label"
                         imageField="image"
                         placeholder="Select Category"
                         searchPlaceholder="Search..."
                         onChange={e => {
-                        setPriorityNo(e.value);
+                        setPriority(e.value);
                         }}
                     />
                 </View>
@@ -254,8 +273,8 @@ const Inside_Task = ({ route, navigation }) => {
                   </View>
                 </KeyboardAvoidingView>
                 
-                <Pressable style={styles.submitButton} onPress={() => console.log('submit')}>
-                    <Text style={{color: 'white', fontSize: 18}}>Add Task</Text>
+                <Pressable style={styles.submitButton} onPress={() => addTaskToFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, taskName, taskDescription, category, priority, date, time, subTask)}>
+                    <Text style={{color: 'white', fontSize: 18}}>Save Task</Text>
                 </Pressable>
             </View>
             
