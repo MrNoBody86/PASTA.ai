@@ -7,6 +7,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { Pressable } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { getDocs, query, where } from 'firebase/firestore';
 
 
 
@@ -46,6 +47,29 @@ const ChatBubble = ({ role, text, messageId, onSpeech,}) => {
           throw e;
         }
   }
+
+  useEffect(() => {
+    const checkFeedbackSubmitted = async () => {
+      if (!FIREBASE_AUTH.currentUser?.uid || !messageId) return;
+  
+      try {
+        const feedbackRef = collection(FIREBASE_DB, "users", FIREBASE_AUTH.currentUser.uid, "feedback");
+        const feedbackQuery = query(feedbackRef, where("messageId", "==", messageId));
+        const snapshot = await getDocs(feedbackQuery);
+  
+        if (!snapshot.empty) {
+          setSubmitted(true); // Feedback exists, disable rating
+          const existing = snapshot.docs[0].data();
+          setRating(existing.starRating); // Optional: show previously selected stars
+        }
+      } catch (e) {
+        console.error("Error checking for existing feedback: ", e);
+      }
+    };
+  
+    checkFeedbackSubmitted();
+  }, [messageId]);
+  
 
   // const handlePress = (index: number) => {
   //   onRatingChange(index + 1); // Rating is 1-indexed
