@@ -11,6 +11,7 @@ import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import PTest from "@/src/pages/PTest";
 import Chat from "@/src/pages/Chat";
 import Financial_Chat from '@/src/pages/Financial_ChatBot';
+import FitnessPage from '@/src/pages/FitnessPage';
 import Fitness_Chat from '@/src/pages/Fitness_ChatBot';
 import Task_Manager from '@/src/pages/Task_Manager';
 import Task_Inside from '@/src/pages/Task_Inside';
@@ -78,6 +79,14 @@ export default function App() {
       </LoginStack.Navigator>
     )
   }
+  function FitnessLayout(){
+    return(
+      <LoginStack.Navigator>
+        <LoginStack.Screen name="FitnessPage" component={FitnessPage} options={{headerShown: false}} />
+        <LoginStack.Screen name="FitnessChatbot" component={Fitness_Chat} options={{headerShown: false}} />
+      </LoginStack.Navigator>
+    )
+  }
   // Layout for screens accessible after login, using a drawer navigator
   function InsideLayout(){
     return (
@@ -124,6 +133,13 @@ export default function App() {
             options={{drawerLabel: "Task Manager",
                       headerTitle: "Task Manager", 
                       drawerIcon: ({size, color}) => (<Ionicons name="clipboard-outline" color={color} size={size} />)}}
+          />
+          <Drawer.Screen
+            name="Fitness Page" 
+            component={FitnessLayout} 
+            options={{drawerLabel: "Fitness Page",
+                      headerTitle: "Fitness Page", 
+                      drawerIcon: ({size, color}) => (<Ionicons name="fitness-outline" color={color} size={size} />)}}
           />
       </Drawer.Navigator>
     )
