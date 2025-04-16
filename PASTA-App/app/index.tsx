@@ -13,6 +13,7 @@ import Chat from "@/src/pages/Chat";
 import Financial_Chat from '@/src/pages/Financial_ChatBot';
 import FitnessPage from '@/src/pages/FitnessPage';
 import Fitness_Chat from '@/src/pages/Fitness_ChatBot';
+import ActivityPage from '@/src/pages/ActivityPage';
 import Task_Manager from '@/src/pages/Task_Manager';
 import Task_Inside from '@/src/pages/Task_Inside';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -84,6 +85,7 @@ export default function App() {
       <LoginStack.Navigator>
         <LoginStack.Screen name="FitnessPage" component={FitnessPage} options={{headerShown: false}} />
         <LoginStack.Screen name="FitnessChatbot" component={Fitness_Chat} options={{headerShown: false}} />
+        <LoginStack.Screen name="ActivityPage" component={ActivityPage} options={{headerShown: false}} />
       </LoginStack.Navigator>
     )
   }

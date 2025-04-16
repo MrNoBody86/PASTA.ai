@@ -1,8 +1,14 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, Pressable } from 'react-native'
 import React from 'react'
 import CircularProgress from 'react-native-circular-progress-indicator'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { NavigationProp } from '@react-navigation/native'
 
-const FitnessPage = () => {
+interface RouterProps {
+  navigation: NavigationProp<any, any>;
+}
+
+const FitnessPage = ({ navigation, route } : RouterProps) => {
   return (
     <View style={styles.container}>
         <View style={styles.statsContainer}>
@@ -38,6 +44,11 @@ const FitnessPage = () => {
         </View>
         <View style={styles.chatBotContainer}>
             <Text style={styles.text}>Go to Fitness Chat Bot -&gt;</Text>
+        </View>
+        <View style={{position: 'absolute', bottom: 20, left: 20}}>
+            <Pressable style={styles.addActivity} onPress={() => {navigation.navigate('ActivityPage')}}>
+                <MaterialCommunityIcons name='plus' size={30} color="black"/>
+            </Pressable>
         </View>
         
     </View>
@@ -77,6 +88,17 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 20,
     },
+    addActivity: {
+        position: 'absolute',
+        top: 190,
+        left: 310,
+        backgroundColor: 'white',
+        width: 60,
+        height: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 30,
+    }
 })
 
 export default FitnessPage
