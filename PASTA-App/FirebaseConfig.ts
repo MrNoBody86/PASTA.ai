@@ -1,17 +1,20 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { REACT_APP_API_KEY, REACT_APP_AUTH_DOMAIN, REACT_APP_PROJECT_ID, REACT_APP_STORAGE_BUCKET, REACT_APP_APP_ID, REACT_APP_MEASUREMENT_ID, REACT_APP_MESSAGING_SENDER_ID } from '@/constants';
+// Import required functions and modules
+import { initializeApp, getApps } from 'firebase/app';
+import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { getFirestore } from 'firebase/firestore';
 
+import {
+  REACT_APP_API_KEY,
+  REACT_APP_AUTH_DOMAIN,
+  REACT_APP_PROJECT_ID,
+  REACT_APP_STORAGE_BUCKET,
+  REACT_APP_APP_ID,
+  REACT_APP_MEASUREMENT_ID,
+  REACT_APP_MESSAGING_SENDER_ID,
+} from '@/constants';
 
-
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase config object
 const firebaseConfig = {
   apiKey: REACT_APP_API_KEY,
   authDomain: REACT_APP_AUTH_DOMAIN,
@@ -19,10 +22,24 @@ const firebaseConfig = {
   storageBucket: REACT_APP_STORAGE_BUCKET,
   messagingSenderId: REACT_APP_MESSAGING_SENDER_ID,
   appId: REACT_APP_APP_ID,
-  measurementId: REACT_APP_MEASUREMENT_ID
+  measurementId: REACT_APP_MEASUREMENT_ID,
 };
-// console.log(firebaseConfig)
-// Initialize Firebase
-export const FIREBASE_APP = initializeApp(firebaseConfig);
-export const FIREBASE_AUTH = getAuth(FIREBASE_APP);
-export const FIREBASE_DB = getFirestore(FIREBASE_APP);
+
+// Initialize Firebase app only once
+const FIREBASE_APP = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
+// Initialize Firebase Auth with persistence
+let FIREBASE_AUTH;
+try {
+  FIREBASE_AUTH = initializeAuth(FIREBASE_APP, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+  });
+} catch (e) {
+  // Firebase Auth already initialized
+  FIREBASE_AUTH = getAuth(FIREBASE_APP);
+}
+
+// Initialize Firestore
+const FIREBASE_DB = getFirestore(FIREBASE_APP);
+
+export { FIREBASE_APP, FIREBASE_AUTH, FIREBASE_DB };
