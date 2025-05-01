@@ -81,7 +81,7 @@ npm start
 7. The folder structure should look like this
 
     ![Backend Server folder Structure](PASTA-App/assets/images/Backend%20Server%20Directory%20Structure.png)
----
+    
 8. Now run the python application.
     ```sh
     python app.py
