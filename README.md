@@ -79,7 +79,9 @@ npm start
 5. Replace the API Keys in .env with your keys.
 6. Add serviceAccountKey.json from Firebase for reading and writing data from firestore.
 7. The folder structure should look like this
+
     ![Backend Server folder Structure](PASTA-App/assets/images/Backend%20Server%20Directory%20Structure.png)
+---
 8. Now run the python application.
     ```sh
     python app.py
