@@ -45,7 +45,29 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
         'Calories': 200,
         'Steps': 3000,
         'ActivityDescription': 'I went jogging at 6 AM',
-      },]
+      }, {
+        'ActivityId': '004',
+        'ActivityTitle': 'Cycling',
+        'ActivityType': 'Cycling',
+        'StartDate': new Date(),
+        'StartTime': new Date(),
+        'Duration': new Date(),
+        'Distance': 5,
+        'Calories': 250,
+        'Steps': 4000,
+        'ActivityDescription': 'I went cycling for 1 hour',
+      }, {
+        'ActivityId': '005',
+        'ActivityTitle': 'Running',
+        'ActivityType': 'Running',
+        'StartDate': new Date(),
+        'StartTime': new Date(),
+        'Duration': new Date(),
+        'Distance': 4,
+        'Calories': 300,
+        'Steps': 5000,
+        'ActivityDescription': 'I went running for 30 minutes',
+      }]
 
   return (
     <View style={styles.container}>
@@ -83,19 +105,52 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
             <View style={styles.insideContainer}>
                 <ScrollView style={styles.activityRows}>
                     {ActivityDetails.map((activity, index) => (
-                        <View key={index} style={{flexDirection: 'row', justifyContent: 'space-between', padding: 10}}>
-                            <Text style={{fontSize: 20}}>{activity.ActivityTitle}</Text>
-                            <MaterialCommunityIcons name='chevron-right' size={30} color="black"/>
+                        <View key={index} style={{flexDirection: 'row', justifyContent: 'space-between', padding: 5}}>
+                            <Text style={{fontSize: 20, width: 250}}>{index+1}. {activity.ActivityTitle}</Text>
+                            <View style={{flexDirection:'row', gap: 10, alignItems: 'center'}}>
+                                <Pressable onPress={() => {navigation.navigate('ActivityPage', {
+                                    INActivityId: activity.ActivityId,
+                                    INActivityTitle: activity.ActivityTitle,
+                                    INActivityType: activity.ActivityType,
+                                    INStartDate: activity.StartDate,
+                                    INStartTime: activity.StartTime,
+                                    INDuration: activity.Duration,
+                                    INDistance: activity.Distance,
+                                    INCalories: activity.Calories,
+                                    INSteps: activity.Steps,
+                                    INActivityDescription: activity.ActivityDescription,
+                                })}}>
+                                    <MaterialCommunityIcons name='chevron-right' size={30} color="black"/>
+                                </Pressable>
+                                <Pressable onPress={() => {console.log("Delete activity")}}>
+                                    <MaterialCommunityIcons name='delete' size={20} color='black' />
+                                </Pressable>
+                            </View>
+                            
                         </View>
                     ))}
                 </ScrollView>
             </View>
         </View>
         <View style={styles.chatBotContainer}>
-            <Text style={styles.text}>Go to Fitness Chat Bot -&gt;</Text>
+            <Text style={styles.text}>Go to Fitness Chat Bot</Text>
+            <Pressable onPress={() => {console.log("Go to Fitness Chat Bot")}}>
+                <MaterialCommunityIcons name='chevron-right' size={30} color="black"/>
+            </Pressable>
         </View>
         <View style={{position: 'absolute', bottom: 20, left: 20}}>
-            <Pressable style={styles.addActivity} onPress={() => {navigation.navigate('ActivityPage')}}>
+            <Pressable style={styles.addActivity} onPress={() => {navigation.navigate('ActivityPage', {
+                INActivityId: '',
+                INActivityTitle: '',
+                INActivityType: '',
+                INStartDate: new Date(),
+                INStartTime: new Date(),
+                INDuration: new Date(),
+                INDistance: 0,
+                INCalories: 0,
+                INSteps: 0,
+                INActivityDescription: '',
+            })}}>
                 <MaterialCommunityIcons name='plus' size={30} color="black"/>
             </Pressable>
         </View>
@@ -126,14 +181,16 @@ const styles = StyleSheet.create({
         gap: 80,
     },
     chatBotContainer: {
-        marginTop: 20,
-        padding: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 10,
+        padding: 15,
         backgroundColor: 'white',
         borderRadius: 20,
     },
     activityContainer: {
-        marginTop: 20,
-        padding: 20,
+        marginTop: 10,
+        padding: 15,
         backgroundColor: 'white',
         borderRadius: 20,
     },
@@ -141,11 +198,11 @@ const styles = StyleSheet.create({
         height: 150,
         backgroundColor: 'white',
         borderRadius: 20,
-        padding: 10,
+        padding: 5,
     },
     addActivity: {
         position: 'absolute',
-        top: 65,
+        top: 100,
         left: 310,
         backgroundColor: 'white',
         width: 60,
