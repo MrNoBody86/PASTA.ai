@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { TextInput } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { NavigationProp } from '@react-navigation/native'
+import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
+import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -54,6 +56,31 @@ const ActivityPage = ({ route, navigation }) => {
         setShowDate(false);
         setShowTime(false);
     }
+
+    async function addActivityToFireBase(db, userUid, ActivityTitle, ActivityType, StartDate, StartTime, Duration, Distance, Calories, Steps, ActivityDescription) {
+          try {
+              const messagesRef = collection(db, "users", userUid, "activities");
+              const newMessage = {
+                  'ActivityTitle': ActivityTitle,
+                  'ActivityType': ActivityType,
+                  'StartDate': StartDate,
+                  'StartTime': StartTime,
+                  'Duration': Duration,
+                  'Distance': Distance,
+                  'Calories': Calories,
+                  'Steps': Steps,
+                  'ActivityDescription': ActivityDescription,
+                  timestamp: serverTimestamp(),
+              };
+              const docRef = await addDoc(messagesRef, newMessage);
+              console.log("Document written with ID: ", docRef.id);
+              navigation.navigate('FitnessPage')
+              return docRef;
+              } catch (e) {
+                console.error("Error adding document: ", e);
+                throw e;
+              }
+        }
 
   return (
     <View style={styles.container}>
@@ -120,7 +147,7 @@ const ActivityPage = ({ route, navigation }) => {
       </View>
       <TextInput style={{marginTop: 10, backgroundColor: 'white', borderRadius: 15}} placeholder='Add Notes' value={activityDescription} onChangeText={setActivityDescription}></TextInput>
       
-      <Pressable style={{backgroundColor: 'black', padding: 10, borderRadius: 20, marginTop: 50}} onPress={() => {console.log(activitySteps)}}>
+      <Pressable style={{backgroundColor: 'black', padding: 10, borderRadius: 20, marginTop: 50}} onPress={() => addActivityToFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, activityTitle, activityType, date, time, duration, activityDistance, activityCalories, activitySteps, activityDescription )}>
         <Text style={{color: 'white', fontSize: 20, textAlign: 'center', fontWeight:'bold'}}>Save</Text>
       </Pressable>
     </View>

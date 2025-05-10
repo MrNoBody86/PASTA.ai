@@ -51,34 +51,6 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
       }));
     };
     
-    const taskDetails = [{
-      'taskId': '001',
-      'taskName': 'MyTask',
-      'taskDescription': 'Task Description',
-      'taskCategory': 'Personal',
-      'taskPriority': 'Medium',
-      'taskDate': new Date(),
-      'taskTime': new Date(),
-      'subTasks': [{'key': 'subTask1'}, {'key': 'subTask2'}]
-    }, {
-      'taskId': '002',
-      'taskName': 'Do code',
-      'taskDescription': 'Task Description',
-      'taskCategory': 'Personal',
-      'taskPriority': 'Medium',
-      'taskDate': new Date(),
-      'taskTime': new Date(),
-      'subTasks': [{'key': 'subTask1'}, {'key': 'subTask2'}]
-    }, {
-      'taskId': '003',
-      'taskName': 'Get shit done',
-      'taskDescription': 'Task Description',
-      'taskCategory': 'Personal',
-      'taskPriority': 'Medium',
-      'taskDate': new Date(),
-      'taskTime': new Date(),
-      'subTasks': [{'key': 'subTask1'}, {'key': 'subTask2'}]
-    },]
 
     const deleteTasks = (taskId, taskIndex) => {
       taskDetails.splice(taskIndex, 1);
@@ -97,7 +69,7 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
           <Pressable style={styles.checkbox} onPress={() => toggleCheckbox(item.taskId)}>
               <MaterialCommunityIcons name={iconName} size={25} color="black" />
           </Pressable>
-          <View style={{paddingLeft: 10}}>
+          <View style={{paddingLeft: 10, width: '53%'}}>
               <Text style={styles.taskTitle}>{item.taskName}</Text>
               <View style={styles.taskDetails}>
                   <Text style={styles.date}>{item.taskDate.toLocaleDateString()}</Text>
