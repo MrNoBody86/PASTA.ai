@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { ScrollView } from 'react-native-gesture-handler'
 import { NavigationProp } from '@react-navigation/native'
-import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp, deleteDoc, updateDoc, doc } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig'
 
 interface RouterProps {
@@ -25,6 +25,7 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
         const fetchedTasks = [];
         querySnapshot.forEach((doc) => {
             const taskData = {
+                taskId: doc.id,
                 taskName: doc.data().taskName,
                 taskDescription: doc.data().taskDescription,
                 taskCategory: doc.data().taskCategory,
@@ -32,9 +33,16 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
                 taskDate: doc.data().taskDate.toDate(),
                 taskTime: doc.data().taskTime.toDate(),
                 subTasks: doc.data().subTasks,
+                completed: doc.data().completed,
+                timestamp: doc.data().timestamp.toDate(),
             };
             fetchedTasks.push(taskData);
             });
+            const initialCheckboxes = {};
+            fetchedTasks.forEach(task => {
+              initialCheckboxes[task.taskId] = task.completed;
+            });
+            setCheckedTasks(initialCheckboxes);
             setAllTasks(fetchedTasks);
         }
 
@@ -42,18 +50,44 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
       if (FIREBASE_AUTH.currentUser?.uid) {
         getTaskDetailsFromFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
       }
-    })
+    }, []);
 
-    const toggleCheckbox = (taskId: string) => {
+    const toggleCheckbox = async (taskId: string) => {
+      const newStatus = !checkedTasks[taskId];
+      // Update local state
       setCheckedTasks((prev) => ({
         ...prev,
-        [taskId]: !prev[taskId], // Toggle the state for this specific task
+        [taskId]: newStatus,
       }));
+
+      try {
+        const userUid = FIREBASE_AUTH.currentUser?.uid;
+        if (!userUid) return;
+
+        const taskRef = doc(FIREBASE_DB, "users", userUid, "tasks", taskId);
+        await updateDoc(taskRef, {
+          completed: newStatus,
+        });
+      } catch (error) {
+        console.error("Error updating task status:", error);
+      }
+
     };
     
 
-    const deleteTasks = (taskId, taskIndex) => {
-      taskDetails.splice(taskIndex, 1);
+    const deleteTaskFromFirebase = async (taskId, taskIndex) => {
+      try {
+        const userUid = FIREBASE_AUTH.currentUser?.uid;
+        if (!userUid) throw new Error("User not authenticated");
+
+        const taskRef = doc(FIREBASE_DB, "users", userUid, "tasks", taskId);
+        await deleteDoc(taskRef);
+
+        // Remove the task from local state
+        setAllTasks(prev => prev.filter(task => task.taskId !== taskId));
+      } catch (error) {
+        console.error("Error deleting task:", error);
+      }
     }
     
   return (
@@ -70,7 +104,8 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
               <MaterialCommunityIcons name={iconName} size={25} color="black" />
           </Pressable>
           <View style={{paddingLeft: 10, width: '53%'}}>
-              <Text style={styles.taskTitle}>{item.taskName}</Text>
+              <Text style={[styles.taskTitle, 
+                            isChecked && { textDecorationLine: 'line-through', color: 'gray' }] } numberOfLines={1} ellipsizeMode='tail'>{item.taskName}</Text>
               <View style={styles.taskDetails}>
                   <Text style={styles.date}>{item.taskDate.toLocaleDateString()}</Text>
                   <Text>{item.taskCategory}</Text>
@@ -86,14 +121,16 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
             INtaskPriority: item.taskPriority,
             INtaskDate: item.taskDate,
             INtaskTime: item.taskTime,
-            INsubTasks: item.subTasks
+            INsubTasks: item.subTasks,
+            INcompleted: item.completed,
+            INtimestamp: item.timestamp,
           })}}>
             <View style={styles.viewTask}>
                 <MaterialCommunityIcons name='clipboard-outline' size={30} color="black"/>
             </View>
           </Pressable>
           
-          <Pressable style={styles.deleteTaskButton}>
+          <Pressable style={styles.deleteTaskButton} onPress={() => {deleteTaskFromFirebase(item.taskId, index)}}>
             <View style={styles.deleteTask}>
                 <MaterialCommunityIcons name="delete-outline" size={25} color="black"/>
             </View>
@@ -109,11 +146,13 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
           INtaskId: '',
           INtaskName: '',
           INtaskDescription: '',
-          INtaskCategory: '1',
-          INtaskPriority: '2',
+          INtaskCategory: 'Personal',
+          INtaskPriority: 'Medium',
           INtaskDate: new Date(),
           INtaskTime: new Date(),
-          INsubTasks: [{'key': 'subTask1'}]
+          INsubTasks: [],
+          INcompleted: false,
+          INtimestamp: serverTimestamp(),
         })}}>
             <MaterialCommunityIcons name="plus" size={25} color='black'/>
         </Pressable>
