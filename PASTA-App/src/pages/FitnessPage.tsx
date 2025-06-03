@@ -39,6 +39,8 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
                 Distance: doc.data().Distance,
                 Calories: doc.data().Calories,
                 Steps: doc.data().Steps,
+                ActivityDescription: doc.data().ActivityDescription,
+                timestamp: doc.data().timestamp.toDate(),
             };
             fetchedActivities.push(ActivityData);
         });
@@ -168,7 +170,12 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
                 <Text style={styles.text}>Your Activities</Text>
                 <View style={styles.insideContainer}>
                     <ScrollView style={styles.activityRows}>
-                        {allActivities.map((activity, index) => (
+                        {allActivities.length === 0 ? (
+                            <Text style={{ fontSize: 16, textAlign: 'center', paddingVertical: 20, color: 'gray' }}>
+                                No activities yet
+                            </Text>
+                        ) : (
+                        allActivities.map((activity, index) => (
                             <View key={index} style={{flexDirection: 'row', justifyContent: 'space-between', padding: 5}}>
                                 <Text style={{fontSize: 20, width: 250}}>{index+1}. {activity.ActivityTitle}</Text>
                                 <View style={{flexDirection:'row', gap: 10, alignItems: 'center'}}>
@@ -183,16 +190,18 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
                                         INCalories: activity.Calories,
                                         INSteps: activity.Steps,
                                         INActivityDescription: activity.ActivityDescription,
+                                        INTimestamp: activity.timestamp,
                                     })}}>
                                         <MaterialCommunityIcons name='chevron-right' size={30} color="black"/>
                                     </Pressable>
-                                    <Pressable onPress={() => {console.log("Delete activity")}}>
+                                    <Pressable onPress={() => deleteActivityFromFirebase(activity.ActivityId, index)}>
                                         <MaterialCommunityIcons name='delete' size={20} color='black' />
                                     </Pressable>
                                 </View>
                                 
                             </View>
-                        ))}
+                        ))
+                        )}
                     </ScrollView>
                 </View>
             </View>
@@ -209,11 +218,12 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
                 INActivityType: '',
                 INStartDate: new Date(),
                 INStartTime: new Date(),
-                INDuration: new Date(),
-                INDistance: 0,
-                INCalories: 0,
-                INSteps: 0,
+                INDuration: new Date(new Date().setHours(0,0,0,0)),
+                INDistance: null,
+                INCalories: null,
+                INSteps: null,
                 INActivityDescription: '',
+                INTimestamp: serverTimestamp(),
             })}}>
                 <MaterialCommunityIcons name='plus' size={30} color="black"/>
         </Pressable>

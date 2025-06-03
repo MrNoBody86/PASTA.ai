@@ -120,6 +120,12 @@ const Inside_Task = ({ route, navigation }) => {
         console.log(subTask); 
     }
 
+    const deleteSubTask  = (index) => {
+        const newSubTasks = subTask.filter((_, i) => i !== index);
+        setSubTask(newSubTasks);
+        console.log(newSubTasks);
+    }
+
     async function addTaskToFireBase(db, userUid, taskName, taskDescription, taskCategory, taskPriority, taskDate, taskTime, subTasks) {
       try {
           const messagesRef = collection(db, "users", userUid, "tasks");
@@ -293,8 +299,11 @@ const Inside_Task = ({ route, navigation }) => {
                 <View style={{flexDirection: 'column', maxHeight: 200}}>
                   <ScrollView>
                     {subTask.map((item, index) => (
-                      <View key={index} style={{ padding: 10, borderBottomWidth: 1 }}>
+                      <View key={index} style={{ padding: 10, borderBottomWidth: 1, flexDirection: 'row', alignItems: 'center', position: 'relative'}}>
                         <Text>{'•'} {item.key}</Text>
+                        <Pressable style={{position: 'absolute', right: 0, top: 0, padding: 10}} onPress={() => deleteSubTask(index)}>
+                          <MaterialCommunityIcons name="delete-outline" size={20} color="black" />
+                        </Pressable>
                       </View>
                     ))}
                   </ScrollView>

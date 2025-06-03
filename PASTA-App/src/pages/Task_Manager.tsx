@@ -92,57 +92,81 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
     
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Your Tasks</Text>
-      <ScrollView style={styles.taskRows}>
-      {allTasks.map((item, index) => {
+  <Text style={styles.header}>Your Tasks</Text>
 
+  {allTasks.length === 0 ? (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text style={{ fontSize: 18, color: 'gray' }}>No tasks created</Text>
+    </View>
+  ) : (
+    <ScrollView style={styles.taskRows}>
+      {allTasks.map((item, index) => {
         const isChecked = checkedTasks[item.taskId] || false;
         const iconName = isChecked ? 'checkbox-marked' : 'checkbox-blank-outline';
         return (
           <View key={index} style={styles.taskContainer}>
-          <Pressable style={styles.checkbox} onPress={() => toggleCheckbox(item.taskId)}>
+            <Pressable style={styles.checkbox} onPress={() => toggleCheckbox(item.taskId)}>
               <MaterialCommunityIcons name={iconName} size={25} color="black" />
-          </Pressable>
-          <View style={{paddingLeft: 10, width: '53%'}}>
-              <Text style={[styles.taskTitle, 
-                            isChecked && { textDecorationLine: 'line-through', color: 'gray' }] } numberOfLines={1} ellipsizeMode='tail'>{item.taskName}</Text>
+            </Pressable>
+            <View style={{ paddingLeft: 10, width: '53%' }}>
+              <Text
+                style={[
+                  styles.taskTitle,
+                  isChecked && { textDecorationLine: 'line-through', color: 'gray' },
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {item.taskName}
+              </Text>
               <View style={styles.taskDetails}>
-                  <Text style={styles.date}>{item.taskDate.toLocaleDateString()}</Text>
-                  <Text>{item.taskCategory}</Text>
-                  <Text>{item.taskPriority}</Text>
+                <Text style={styles.date}>{item.taskDate.toLocaleDateString()}</Text>
+                <Text>{item.taskCategory}</Text>
+                <Text>{item.taskPriority}</Text>
               </View>
+            </View>
+
+            <Pressable
+              style={styles.viewTaskButton}
+              onPress={() => {
+                navigation.navigate('TaskView', {
+                  INtaskId: item.taskId,
+                  INtaskName: item.taskName,
+                  INtaskDescription: item.taskDescription,
+                  INtaskCategory: item.taskCategory,
+                  INtaskPriority: item.taskPriority,
+                  INtaskDate: item.taskDate,
+                  INtaskTime: item.taskTime,
+                  INsubTasks: item.subTasks,
+                  INcompleted: item.completed,
+                  INtimestamp: item.timestamp,
+                });
+              }}
+            >
+              <View style={styles.viewTask}>
+                <MaterialCommunityIcons name="clipboard-outline" size={30} color="black" />
+              </View>
+            </Pressable>
+
+            <Pressable
+              style={styles.deleteTaskButton}
+              onPress={() => deleteTaskFromFirebase(item.taskId, index)}
+            >
+              <View style={styles.deleteTask}>
+                <MaterialCommunityIcons name="delete-outline" size={25} color="black" />
+              </View>
+            </Pressable>
           </View>
-  
-          <Pressable style={styles.viewTaskButton}  onPress={() => {navigation.navigate('TaskView', {
-            INtaskId : item.taskId,
-            INtaskName: item.taskName,
-            INtaskDescription: item.taskDescription,
-            INtaskCategory: item.taskCategory,
-            INtaskPriority: item.taskPriority,
-            INtaskDate: item.taskDate,
-            INtaskTime: item.taskTime,
-            INsubTasks: item.subTasks,
-            INcompleted: item.completed,
-            INtimestamp: item.timestamp,
-          })}}>
-            <View style={styles.viewTask}>
-                <MaterialCommunityIcons name='clipboard-outline' size={30} color="black"/>
-            </View>
-          </Pressable>
-          
-          <Pressable style={styles.deleteTaskButton} onPress={() => {deleteTaskFromFirebase(item.taskId, index)}}>
-            <View style={styles.deleteTask}>
-                <MaterialCommunityIcons name="delete-outline" size={25} color="black"/>
-            </View>
-          </Pressable>
-  
-        </View>
-        )
-        
+        );
       })}
-      </ScrollView>
-      <View style={styles.addTask}>
-        <Pressable style={styles.addTaskButton} onPress={() => {navigation.navigate('TaskView', {
+    </ScrollView>
+  )}
+
+  <View style={styles.addTask}>
+    <Pressable
+      style={styles.addTaskButton}
+      onPress={() => {
+        navigation.navigate('TaskView', {
           INtaskId: '',
           INtaskName: '',
           INtaskDescription: '',
@@ -153,12 +177,13 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
           INsubTasks: [],
           INcompleted: false,
           INtimestamp: serverTimestamp(),
-        })}}>
-            <MaterialCommunityIcons name="plus" size={25} color='black'/>
-        </Pressable>
-      </View>
-
-    </SafeAreaView>
+        });
+      }}
+    >
+      <MaterialCommunityIcons name="plus" size={25} color="black" />
+    </Pressable>
+  </View>
+</SafeAreaView>
 
     
   )
@@ -167,6 +192,7 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
 const styles = StyleSheet.create({
     container: {
         padding: 20,
+        flex: 1
     },
     header: {
         fontSize: 24,
@@ -174,7 +200,8 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     taskRows:{
-      height: '82%'
+      flex: 1,
+      marginBottom: 80,
     },
     taskContainer: {
         height: 85,
@@ -229,7 +256,7 @@ const styles = StyleSheet.create({
     },
     addTask: {
         position: 'absolute',
-        bottom: -53,
+        bottom: 25,
         right: 20,
         width: 60,
         height: 60,

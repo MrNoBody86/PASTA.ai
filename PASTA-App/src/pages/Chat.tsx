@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import axios from 'axios';
 import ChatBubble from "../../components/ChatBubble";
 import { speak, isSpeakingAsync, stop } from "expo-speech";
@@ -156,11 +157,11 @@ export function Chat() {
                     placeholder="Type a message"
                 />
                 <TouchableOpacity 
-                    style={[styles.button, { backgroundColor: userInput ? '#007AFF' : '#8bbff7' }]}
+                    style={[styles.button, { backgroundColor: userInput.trim() ? '#007AFF' : '#8bbff7' }]}
                     onPress={handleUserInput} 
                     disabled={!userInput.trim()}
                 >
-                    <Text style={styles.buttonText}>Send</Text>
+                    <MaterialCommunityIcons name="send" size={25} color="white" />
                 </TouchableOpacity>
             </View>
             {loading && <ActivityIndicator size="large" color="#0000ff" />}  
