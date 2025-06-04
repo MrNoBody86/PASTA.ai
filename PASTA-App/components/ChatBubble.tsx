@@ -48,13 +48,30 @@ const ChatBubble = ({ role, text, messageId, rlEpisodeId, onSpeech,}) => {
                         typeof episodeData.reward.details?.originalStarRating === 'number') {
                         setRating(episodeData.reward.details.originalStarRating);
                         setIsSubmitted(true);
+                    }  else {
+                      // If docSnap doesn't exist, it means no feedback yet for this NEW episode.
+                      // Ensure isSubmitted is false and rating is 0 for new episodes.
+                      setIsSubmitted(false);
+                      setRating(0);
+                      console.log(`No existing feedback found for rlEpisodeId: ${rlEpisodeId}. Resetting UI.`);
                     }
                 }
             } catch (error) {
                 console.error("Error checking existing RL feedback:", error);
+                setIsSubmitted(false);
+                setRating(0);
             } finally {
                 setIsLoadingFeedback(false);
             }
+        }
+        else if (role === 'model' && !rlEpisodeId) {
+          // If it's a model message but has no rlEpisodeId (e.g. error during episode creation on backend)
+          // then feedback UI shouldn't appear or should be disabled by default.
+          // The current logic in the return() statement handles this:
+          // {role === "model" && rlEpisodeId && ( ... feedback UI ... )}
+          // So, this part of useEffect might not be strictly necessary unless you want to explicitly reset.
+          setIsSubmitted(false);
+          setRating(0);
         }
     };
     checkExistingFeedback();

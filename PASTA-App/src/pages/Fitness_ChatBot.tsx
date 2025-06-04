@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import axios from 'axios';
 import ChatBubble from "../../components/ChatBubble";
 import { speak, isSpeakingAsync, stop } from "expo-speech";
@@ -118,14 +119,14 @@ export function Fitness_Chat() {
             if (modelText && episodeIdFromServer) {
                 // UI update for model message is handled by onSnapshot listener if backend saves it
                 // If backend doesn't save to fitnessMessages for display, add it here:
-                const modelMessageForUI: ChatMessage = {
-                    id: modelMessageFirestoreId || `model-${Date.now()}`, // Use actual ID if available
-                    role: 'model',
-                    parts: [{ text: modelText }],
-                    rl_episode_id: episodeIdFromServer,
-                    model_message_firestore_id: modelMessageFirestoreId
-                };
-                setChat(prevChat => [...prevChat, modelMessageForUI]);
+                // const modelMessageForUI: ChatMessage = {
+                //     id: modelMessageFirestoreId || `model-${Date.now()}`, // Use actual ID if available
+                //     role: 'model',
+                //     parts: [{ text: modelText }],
+                //     rl_episode_id: episodeIdFromServer,
+                //     model_message_firestore_id: modelMessageFirestoreId
+                // };
+                // setChat(prevChat => [...prevChat, modelMessageForUI]);
 
                 // The backend now saves both user and model messages to fitnessMessages
                 // so the onSnapshot listener should pick them up.
