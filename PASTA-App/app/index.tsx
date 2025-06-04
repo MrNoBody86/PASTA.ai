@@ -8,6 +8,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import Dashboard from '@/src/pages/Dashboard';
 import PTest from "@/src/pages/PTest";
 import Chat from "@/src/pages/Chat";
 import Financial_Chat from '@/src/pages/Financial_ChatBot';
@@ -17,6 +18,7 @@ import ActivityPage from '@/src/pages/ActivityPage';
 import Task_Manager from '@/src/pages/Task_Manager';
 import Task_Inside from '@/src/pages/Task_Inside';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {Logo2} from "@/Images";
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
 import Signup from '@/src/pages/Signup';
@@ -92,7 +94,7 @@ export default function App() {
   // Layout for screens accessible after login, using a drawer navigator
   function InsideLayout(){
     return (
-      <Drawer.Navigator initialRouteName="Personality Test"
+      <Drawer.Navigator initialRouteName="Dashboard"
                         drawerContent={(props) => <CustomDrawerComponent {...props}/>}
                         screenOptions={{
                           drawerActiveTintColor: 'white',
@@ -101,6 +103,13 @@ export default function App() {
                           drawerLabelStyle: {fontSize: 16}
                         }}>
           {/* Defining screens available in the drawer */}
+          <Drawer.Screen
+            name="Dashboard"
+            component={Dashboard} 
+            options={{drawerLabel: "Dashboard", 
+                      headerTitle: "Dashboard",
+                      drawerIcon: ({size, color}) => (<MaterialCommunityIcons name="view-dashboard" color={color} size={size} />)}}
+            />
           <Drawer.Screen
             name="Personality Test"
             component={PTest} 
