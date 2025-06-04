@@ -1,131 +1,148 @@
-// Import necessary components and libraries from React Native and Expo
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native'; // Added Text for feedback submitted
 import Markdown from 'react-native-markdown-display';
-import React, { useState, useCallback, useEffect }from 'react';
+import React, { useState, useEffect } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { Pressable } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { getDocs, query, where } from 'firebase/firestore';
+import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig'; // For current user and Firestore operations
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import axios from 'axios'; // For sending RL feedback to backend
+import { YOUR_BACKEND_API_URL } from '@/constants'; // Your backend URL
 
-
-
-
+// Props definition
+interface ChatBubbleProps {
+  role: 'user' | 'model';
+  text: string;
+  messageId?: string; // This ID is crucial. For MODEL messages, it should be the backendRlMessageId.
+  onSpeech: () => void;
+}
 // ChatBubble component to display individual chat messages
 // Props:
 // - role: indicates if the message is from the user or the model
 // - text: the message text to be displayed
 // - onSpeech: function to handle text-to-speech for model messages
-const ChatBubble = ({ role, text, messageId, onSpeech,}) => {
+const ChatBubble: React.FC<ChatBubbleProps> = ({ role, text, messageId, onSpeech }) => {
   const [rating, setRating] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
+  const [isRatingSubmitted, setIsRatingSubmitted] = useState(false); // For Firestore feedback status
+  const [isRLFeedbackSent, setIsRLFeedbackSent] = useState(false); // For RL backend feedback status
+  const currentUser = FIREBASE_AUTH.currentUser;
+
+  // Check if feedback (to Firestore) was already submitted for this messageId
+  useEffect(() => {
+    const checkFirestoreFeedbackSubmitted = async () => {
+      if (!currentUser?.uid || !messageId || role !== 'model') return;
+      try {
+        const feedbackRef = collection(FIREBASE_DB, "users", currentUser.uid, "feedback");
+        const feedbackQuery = query(feedbackRef, where("messageId", "==", messageId));
+        const snapshot = await getDocs(feedbackQuery);
+        if (!snapshot.empty) {
+          setIsRatingSubmitted(true);
+          setRating(snapshot.docs[0].data().starRating || 0);
+        }
+      } catch (e) {
+        console.error("Error checking for existing Firestore feedback: ", e);
+      }
+    };
+    checkFirestoreFeedbackSubmitted();
+  }, [messageId, currentUser, role]);
 
 
   const handleRatingChange = (newRating: number) => {
+    if (isRatingSubmitted || isRLFeedbackSent) return; // Don't change if already submitted
     setRating(newRating);
-    console.log(`Rated ${newRating} stars for: ${text}`);
   };
 
-  // Send feedback to firestore
-  async function handleSubmit(db, userUid, messageId, starRating) {
-    if (submitted || rating === 0) return;
-    try {
-        const feedbackRef = collection(db, "users", userUid, "feedback");
-        const feedback = {
-            messageId: messageId,
-            starRating: starRating,
-            timestamp: serverTimestamp(),
-        };
-        const docRef = await addDoc(feedbackRef, feedback);
-        setSubmitted(true);
-        console.log("Rating submitted:", feedback);
-        console.log("Document written with ID: ", docRef.id);
-        return docRef;
-        } catch (e) {
-          console.error("Error submitting the rating: ", e);
-          throw e;
-        }
-  }
+  const submitCombinedFeedback = async () => {
+    if (rating === 0 || !currentUser || !messageId || role !== 'model') return;
 
-  useEffect(() => {
-    const checkFeedbackSubmitted = async () => {
-      if (!FIREBASE_AUTH.currentUser?.uid || !messageId) return;
-  
+    // 1. Submit to Firestore (for your records/other uses)
+    if (!isRatingSubmitted) {
       try {
-        const feedbackRef = collection(FIREBASE_DB, "users", FIREBASE_AUTH.currentUser.uid, "feedback");
-        const feedbackQuery = query(feedbackRef, where("messageId", "==", messageId));
-        const snapshot = await getDocs(feedbackQuery);
-  
-        if (!snapshot.empty) {
-          setSubmitted(true); // Feedback exists, disable rating
-          const existing = snapshot.docs[0].data();
-          setRating(existing.starRating); // Optional: show previously selected stars
-        }
+        const feedbackRef = collection(FIREBASE_DB, "users", currentUser.uid, "feedback");
+        await addDoc(feedbackRef, {
+          messageId: messageId, // Use the RL messageId here if you want to link them
+          starRating: rating,
+          textPreview: text.substring(0, 100), // Optional: store a preview
+          timestamp: serverTimestamp(),
+        });
+        setIsRatingSubmitted(true);
+        console.log("Firestore Feedback: Submitted for messageId:", messageId);
       } catch (e) {
-        console.error("Error checking for existing feedback: ", e);
+        console.error("Firestore Feedback: Error submitting: ", e);
+        // Potentially show an error to the user for Firestore submission failure
       }
-    };
-  
-    checkFeedbackSubmitted();
-  }, [messageId]);
-  
+    }
 
-  // const handlePress = (index: number) => {
-  //   onRatingChange(index + 1); // Rating is 1-indexed
-  // };
+    // 2. Submit to RL Backend
+    if (!isRLFeedbackSent) { // Check this separately in case Firestore call was faster
+      try {
+        console.log(`RL Feedback: Sending for messageId: ${messageId}, rating: ${rating}`);
+        await axios.post(
+          `${YOUR_BACKEND_API_URL}/log_chatbot_feedback`,
+          {
+            messageId: messageId, // This is the backendRlMessageId
+            starRating: rating,
+          }
+          // TODO: Add Authorization header with Firebase ID Token once backend supports it
+          // { headers: { 'Authorization': `Bearer ${await currentUser.getIdToken()}` } }
+        );
+        setIsRLFeedbackSent(true); // Mark RL feedback as sent
+        console.log("RL Backend Feedback: Submitted for messageId:", messageId);
+      } catch (error) {
+        console.error("RL Backend Feedback: Error submitting: ", error);
+        // Potentially show an error to the user for RL feedback submission failure
+      }
+    }
+  };
+
+  const showFeedbackSection = role === 'model' && messageId; // Only for model messages with an ID
 
   return (
-    <View
-      style={[
-        styles.chatItem,
-        role === "user" ? styles.userChatItem : styles.modelChatItem,  // Apply different styles based on the sender
-      ]}>
+    <View style={[styles.chatItem, role === "user" ? styles.userChatItem : styles.modelChatItem]}>
       <Markdown style={markdownStyles}>{text}</Markdown>
 
-      {role === "model" && (
-      <>
-         {/* Speaker button for TTS */}
-        <TouchableOpacity style={styles.speakerIcon} onPress={onSpeech}>
-          <Ionicons name="volume-high-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+      {showFeedbackSection && (
+        <>
+          <TouchableOpacity style={styles.speakerIcon} onPress={onSpeech}>
+            <Ionicons name="volume-high-outline" size={24} color={role === 'model' ? "#fff" : "#333"} />
+          </TouchableOpacity>
 
-        {/* Rating & submit section */}
-        {!submitted && (
+          {!isRatingSubmitted && !isRLFeedbackSent && ( // Show rating stars only if not yet submitted fully
             <View style={styles.ratingContainer}>
               {[...Array(5)].map((_, i) => (
-                <TouchableOpacity key={i} onPress={() => handleRatingChange(i + 1)}>
+                <TouchableOpacity key={i} onPress={() => handleRatingChange(i + 1)} disabled={isRatingSubmitted || isRLFeedbackSent}>
                   <Ionicons
                     name={i < rating ? 'star' : 'star-outline'}
                     size={24}
-                    color="#FFD700"
+                    color="#FFD700" // Gold color for stars
                   />
                 </TouchableOpacity>
               ))}
-              <Pressable
-                onPress={() => handleSubmit(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, messageId, rating)}
-                disabled={rating === 0}
+              <TouchableOpacity
+                onPress={submitCombinedFeedback}
+                disabled={rating === 0 || isRatingSubmitted || isRLFeedbackSent}
                 style={[
                   styles.submitButton,
-                  { opacity: rating === 0 ? 0.5 : 1 },
+                  { opacity: (rating === 0 || isRatingSubmitted || isRLFeedbackSent) ? 0.5 : 1 },
                 ]}
               >
-                <MaterialCommunityIcons name="check" size={25} color="white" />
-              </Pressable>
+                <MaterialCommunityIcons name="check-bold" size={20} color="white" />
+              </TouchableOpacity>
             </View>
           )}
 
-          {/* Show confirmation once submitted */}
-          {submitted && (
+          {(isRatingSubmitted || isRLFeedbackSent) && ( // Show "Feedback Submitted" if either is done
             <View style={styles.feedbackSubmitted}>
-              <MaterialCommunityIcons
-                name="check-circle"
-                size={22}
-                color="#4CAF50"
-              />
+              <MaterialCommunityIcons name="check-circle" size={22} color="#4CAF50" />
+              <Text style={styles.feedbackSubmittedText}>Feedback Submitted</Text>
             </View>
           )}
-      </>
+        </>
+      )}
+      {/* For user messages, if you want a speaker icon without feedback */}
+      {role === 'user' && (
+         <TouchableOpacity style={styles.speakerIconUser} onPress={onSpeech}>
+            <Ionicons name="volume-high-outline" size={24} color="#fff" />
+        </TouchableOpacity>
       )}
     </View>
   );
