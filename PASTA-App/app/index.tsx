@@ -11,6 +11,7 @@ import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import Dashboard from '@/src/pages/Dashboard';
 import PTest from "@/src/pages/PTest";
 import Chat from "@/src/pages/Chat";
+import Financial_Chat from '@/src/pages/Financial_ChatBot';
 import FitnessPage from '@/src/pages/FitnessPage';
 import Fitness_Chat from '@/src/pages/Fitness_ChatBot';
 import ActivityPage from '@/src/pages/ActivityPage';
@@ -121,6 +122,13 @@ export default function App() {
             component={Chat} 
             options={{drawerLabel: "Chatbox",
                       headerTitle: "ChatBox", 
+                      drawerIcon: ({size, color}) => (<Ionicons name="chatbox-outline" color={color} size={size} />)}}
+          />
+          <Drawer.Screen 
+            name="Financial Chat" 
+            component={Financial_Chat} 
+            options={{drawerLabel: " Financial Chatbox",
+                      headerTitle: "Financial ChatBox", 
                       drawerIcon: ({size, color}) => (<Ionicons name="chatbox-outline" color={color} size={size} />)}}
           />
           <Drawer.Screen 

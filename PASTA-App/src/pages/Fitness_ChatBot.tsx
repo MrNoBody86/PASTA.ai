@@ -3,21 +3,18 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, S
 import axios from 'axios';
 import ChatBubble from "../../components/ChatBubble";
 import { speak, isSpeakingAsync, stop } from "expo-speech";
-<<<<<<< Updated upstream
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { NavigationProp } from '@react-navigation/native';
 import { Logo2 } from '@/Images';
-=======
->>>>>>> Stashed changes
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
-import { YOUR_BACKEND_API_URL } from '@/constants';
+import { FITNESS_API_URL } from '@/constants';
 import { SET_USER_ID } from '@/constants';
 
 // Main Fitness_Chat component
 export function Fitness_Chat() {
     // State variables for chat messages, user input, loading status, error messages, and speech status
-    const [chat, setChat] = useState<Array<{ role: string; parts: Array<{ text: string }>; id?: string }>>([]);
+    const [chat, setChat] = useState([]);
     const [userInput, setUserInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -26,27 +23,35 @@ export function Fitness_Chat() {
     // Fetch recent chat messages from Firebase
     async function getRecentFitnessChatbotMessages(db, userUid, messageLimit) {
         const messagesRef = collection(db, "users", userUid, "fitnessMessages");
-        const q = query(messagesRef, orderBy("timestamp", "desc"), limit(messageLimit));
+        const q = query(
+            messagesRef,
+            orderBy("timestamp", "desc"),
+            limit(messageLimit)
+        );
         const querySnapshot = await getDocs(q);
-        const messages = [];
+        var messages = [];
         querySnapshot.forEach((doc) => {
-            messages.push({
+            const messageData = {
                 parts: [{ text: doc.data().content }],
                 role: doc.data().sender,
-                id: doc.id, // This is the Firestore document ID
-            });
+                id: doc.id,
+            };
+            messages.push(messageData);
         });
-        setChat(messages.reverse());
+        messages = messages.reverse();
+        setChat(messages);
     }
 
+    // Load messages on component mount
     useEffect(() => {
-        if (FIREBASE_AUTH.currentUser?.uid) {
+        if(FIREBASE_AUTH.currentUser?.uid){
             getRecentFitnessChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
         }
+                // console.log("Stored Messages:",message);
     }, []);
 
-    // --- Existing addMessage function to save to Firestore ---
-    async function addMessage(db, userUid, sender, text, firestoreDocId = null) { // Added optional firestoreDocId
+    // Save a message to Firebase
+    async function addMessage(db, userUid, sender, text) {
         try {
             const messagesRef = collection(db, "users", userUid, "fitnessMessages");
             const newMessage = {
@@ -54,141 +59,110 @@ export function Fitness_Chat() {
                 content: text,
                 timestamp: serverTimestamp(),
             };
-            // If firestoreDocId is provided (e.g., the RL messageId), use it as the document ID
-            // This helps if you want to directly query Firestore using the RL messageId.
-            // Otherwise, Firestore will auto-generate an ID.
-            const docRef = firestoreDocId ? await messagesRef.doc(firestoreDocId).set(newMessage) : await addDoc(messagesRef, newMessage);
-            console.log("Firestore: Message saved with ID: ", firestoreDocId || docRef.id);
+            const docRef = await addDoc(messagesRef, newMessage);
+            console.log("Document written with ID: ", docRef.id);
             return docRef;
         } catch (e) {
-            console.error("Firestore: Error adding document: ", e);
+            console.error("Error adding document: ", e);
             throw e;
         }
     }
 
+    // Handle user input and API call
     const handleUserInput = async () => {
-        if (!userInput.trim() || !FIREBASE_AUTH.currentUser) return;
-
-        const userMessage = {
-            role: 'user',
-            parts: [{ text: userInput }],
-            // User messages typically won't have a backend-generated RL ID unless you adapt further
-        };
-        const updatedChatWithUser = [...chat, userMessage];
-        setChat(updatedChatWithUser);
-        const currentInput = userInput;
-        setUserInput(""); // Clear input immediately for better UX
+        // Update chat with user message
+        let updatedChat = [
+            ...chat,
+            {
+                role: 'user',
+                parts: [{ text: userInput }],
+            },
+        ];
         setLoading(true);
-        setError('');
 
         try {
-            // **IMPORTANT**: For production, replace global USER_ID setting with token authentication
-            // For temporary testing with your /get_userid/ endpoint:
-            const tempUserId = FIREBASE_AUTH.currentUser.uid;
-            try {
-                // This call is ONLY for the temporary global USER_ID setup on your backend
-                // REMOVE this when you implement proper token-based auth in your backend
-                await axios.get(`${YOUR_BACKEND_API_URL}/get_userid/${tempUserId}`);
-                console.log(`TEMP: Set backend USER_ID to ${tempUserId}`);
-            } catch (setupError) {
-                console.warn("TEMP: Failed to set backend USER_ID (this is okay if backend already has it or uses token auth)", setupError);
+            // Make API call to fetch bot response
+            const USER_ID = FIREBASE_AUTH.currentUser?.uid;
+            const set_user_id = await axios.get(`${SET_USER_ID}/${USER_ID}`);
+            const response = await axios.get(`${FITNESS_API_URL}/${userInput}`);
+            console.log("Agent Response", response.data['response']);
+
+            if (response.data) {
+                // Update chat with bot response
+                const updatedChatWithModel = [
+                    ...updatedChat,
+                    {
+                        role: 'model',
+                        parts: [{ text: response.data['response'] }],
+                    },
+                ];
+                setChat(updatedChatWithModel);
+
+                // Save both user and bot messages to Firebase
+                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "user", userInput);
+                addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", response.data['response']);
+                setUserInput("");
+                setError("");
             }
-            // **END IMPORTANT**
-
-            // --- Call your RL-enhanced backend ---
-            const apiResponse = await axios.get(
-                `${YOUR_BACKEND_API_URL}/get_fitness_content/${encodeURIComponent(currentInput)}`
-                // TODO: Add Authorization header with Firebase ID Token once backend supports it
-                // { headers: { 'Authorization': `Bearer ${await FIREBASE_AUTH.currentUser.getIdToken()}` } }
-            );
-
-            const modelResponseMessage = apiResponse.data?.response;
-            const backendRlMessageId = apiResponse.data?.messageId; // <<< GET THE RL MESSAGE ID
-
-            if (modelResponseMessage && backendRlMessageId) {
-                const modelMessage = {
-                    role: 'model',
-                    parts: [{ text: modelResponseMessage }],
-                    id: backendRlMessageId, // <<< STORE THE BACKEND-GENERATED RL ID
-                };
-                setChat(prevChat => [...prevChat, modelMessage]); // Add to the chat shown to user
-
-                // Save user message to Firestore (if you haven't already outside this try block)
-                 await addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, "user", currentInput);
-                // Save model message to Firestore
-                // You can choose to use backendRlMessageId as the Firestore document ID if it's unique
-                // or just save it as a field within the document.
-                await addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, "model", modelResponseMessage, backendRlMessageId);
-
-            } else {
-                console.error("Backend Error: Missing response or messageId from backend", apiResponse.data);
-                setError("Received an incomplete response from the server.");
-            }
-        } catch (error: any) {
-            console.error("Error calling Fitness RL API:", error.response?.data || error.message);
-            setError(error.response?.data?.error || "An error occurred. Please try again.");
+        } catch (error) {
+            console.log("Error calling Fitness API", error);
+            setError("An Error occurred, Please try again");
         } finally {
             setLoading(false);
         }
     };
 
+    // Handle speech synthesis for chat messages
     const handleSpeech = async (text) => {
-        // ... (your existing speech logic) ...
         if (isSpeaking) {
-            await stop();
+            stop();
             setIsSpeaking(false);
         } else {
             if (!(await isSpeakingAsync())) {
-                speak(text, { onDone: () => setIsSpeaking(false), onError: () => setIsSpeaking(false) });
+                speak(text);
                 setIsSpeaking(true);
             }
         }
     };
 
-    const renderChatItem = ({ item }: { item: { role: string; parts: Array<{ text: string }>; id?: string } }) => {
+    // Render each chat message
+    const renderChatItem = ({ item }) => {
         return (
             <ChatBubble
                 role={item.role}
                 text={item.parts[0].text}
-                // Pass the 'id' from the chat item as 'messageId' prop to ChatBubble.
-                // For model messages, this will be the backendRlMessageId.
-                // For user messages or older model messages (before this change), it might be Firestore ID or undefined.
-                messageId={item.id} 
+                messageId={item.id}
                 onSpeech={() => handleSpeech(item.parts[0].text)}
-                // No onRatingChange needed if ChatBubble handles its own submission
             />
         );
     };
 
+    // Main render function
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Fitness ChatBot (RL)</Text>
+            <Text style={styles.title}>Fitness ChatBot</Text>
             <FlatList
                 data={chat}
                 renderItem={renderChatItem}
-                keyExtractor={(item, index) => item.id || index.toString()} // Use item.id if available for key
+                keyExtractor={(item, index) => index.toString()}
                 contentContainerStyle={styles.chatContainer}
-                // automaticallyScrollToBottom // Consider adding this or a ref to scroll
             />
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.input}
                     value={userInput}
                     onChangeText={setUserInput}
-                    placeholder="Ask about fitness..."
+                    placeholder="Type a message"
                 />
                 <TouchableOpacity
                     style={[styles.button, { backgroundColor: userInput.trim() ? '#007AFF' : '#8bbff7' }]}
                     onPress={handleUserInput}
-                    disabled={!userInput.trim() || loading}
+                    disabled={!userInput}
                 >
-<<<<<<< Updated upstream
                     <MaterialCommunityIcons name="send" size={25} color="white" />
-=======
-                    {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.buttonText}>Send</Text>}
->>>>>>> Stashed changes
                 </TouchableOpacity>
             </View>
+            {loading && <ActivityIndicator size="large" color="#0000ff" />}
             {error && <Text style={styles.error}>{error}</Text>}
         </View>
     );
