@@ -138,11 +138,14 @@ const PTest = () => {
       personalityScores.push(messageData);
     });
     setpersonalityScore(personalityScores);
-    setEXT(personalityScore[0]["scoreEXT"]);
-    setAGG(personalityScore[0]["scoreAGG"]);
-    setCON(personalityScore[0]["scoreCON"]);
-    setNEU(personalityScore[0]["scoreNEU"]);
-    setOPE(personalityScore[0]["scoreOPE"]);
+    if (personalityScores.length > 0) {
+      const latest = personalityScores[0]; // get the most recent one
+      setEXT(latest.scoreEXT);
+      setAGG(latest.scoreAGG);
+      setCON(latest.scoreCON);
+      setNEU(latest.scoreNEU);
+      setOPE(latest.scoreOPE);
+    }
   }
 
   // Track percentage completion of the quiz
@@ -274,9 +277,15 @@ const PTest = () => {
     setQuestionsAnswered([]);
   }
 
+  useEffect(() => {
+    if (showResult || questionScore.length !== 0) {
+      getPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
+    }
+  }, [showResult, questionScore.length]);
+
+
   // Display results if quiz is completed
   if (showResult || questionScore.length != 0){
-    getPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
     return  <Results restart={restart} scoreEXT={scoreEXT} scoreAGG={scoreAGG} scoreCON={scoreCON} scoreNEU={scoreNEU} scoreOPE={scoreOPE} />
   }
 
