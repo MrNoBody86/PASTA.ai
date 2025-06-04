@@ -277,7 +277,7 @@ export function Fitness_Chat() {
                     onPress={handleUserInput}
                     disabled={!userInput.trim() || loading}
                 >
-                    <Text style={styles.buttonText}>Send</Text>
+                    <MaterialCommunityIcons name="send" size={25} color="white" />
                 </TouchableOpacity>
             </View>
             {loading && <ActivityIndicator style={styles.loading} size="large" color="#007AFF" />}

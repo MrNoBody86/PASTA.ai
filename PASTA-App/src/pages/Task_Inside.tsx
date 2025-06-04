@@ -8,7 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import { NavigationProp } from '@react-navigation/native'
 import { TASK_AGENT_URL } from '@/constants'
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
-import { collection, query, orderBy, getDocs, limit, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, limit, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import axios from 'axios';
 
 interface RouterProps {
@@ -77,7 +77,7 @@ const PRIORITY = [
   ];
 
 const Inside_Task = ({ route, navigation }) => {
-    var { INtaskId, INtaskName, INtaskDescription, INtaskCategory, INtaskPriority, INtaskDate, INtaskTime, INsubTasks } = route.params;
+    var { INtaskId, INtaskName, INtaskDescription, INtaskCategory, INtaskPriority, INtaskDate, INtaskTime, INsubTasks, INcompleted, INtimestamp } = route.params;
     const [taskId, setTaskId] = useState(INtaskId);
     const [taskName, setTaskName] = useState(INtaskName);
     const [taskDescription, setTaskDescription] = useState(INtaskDescription);
@@ -85,6 +85,8 @@ const Inside_Task = ({ route, navigation }) => {
     const [priority, setPriority] = useState(INtaskPriority);
     const [date, setDate] = useState(INtaskDate);
     const [time, setTime] = useState(INtaskTime);
+    const [completed, setCompleted] = useState(INcompleted);
+    const [timestamp, setTimestamp] = useState(INtimestamp);
     const [showDate, setShowDate] = useState(false);
     const [showTime, setShowTime] = useState(false);
     const [subTask, setSubTask] = useState(INsubTasks);
@@ -116,7 +118,12 @@ const Inside_Task = ({ route, navigation }) => {
         setSubTask([...subTask, {'key': title}]);
         setSubTaskText('');
         console.log(subTask); 
-        console.log(date);
+    }
+
+    const deleteSubTask  = (index) => {
+        const newSubTasks = subTask.filter((_, i) => i !== index);
+        setSubTask(newSubTasks);
+        console.log(newSubTasks);
     }
 
     async function addTaskToFireBase(db, userUid, taskName, taskDescription, taskCategory, taskPriority, taskDate, taskTime, subTasks) {
@@ -130,6 +137,7 @@ const Inside_Task = ({ route, navigation }) => {
               taskDate: taskDate,
               taskTime: taskTime,
               subTasks: subTasks,
+              completed: false,
               timestamp: serverTimestamp(),
           };
           const docRef = await addDoc(messagesRef, newMessage);
@@ -140,6 +148,39 @@ const Inside_Task = ({ route, navigation }) => {
             console.error("Error adding document: ", e);
             throw e;
           }
+    }
+
+    async function updateTaskInFirebase(db, userUid, taskId, updatedTask) {
+      try {
+        const taskRef = doc(db, "users", userUid, "tasks", taskId);
+        await updateDoc(taskRef, updatedTask);
+        console.log("Task updated successfully");
+        navigation.navigate('Task'); // or show confirmation
+      } catch (error) {
+        console.error("Error updating task:", error);
+      }
+    }
+
+    const handleSaveTask = () => {
+      const taskData = {
+        taskName: taskName,
+        taskDescription: taskDescription,
+        taskCategory: category,
+        taskPriority: priority,
+        taskDate: date,
+        taskTime: time,
+        subTasks: subTask,
+        completed: completed,
+        timestamp: timestamp,
+      };
+
+       const userUid = FIREBASE_AUTH.currentUser?.uid;
+
+      if(taskId) {
+        updateTaskInFirebase(FIREBASE_DB, userUid, taskId, taskData);
+      } else {
+        addTaskToFireBase(FIREBASE_DB, userUid, taskName, taskDescription, category, priority, date, time, subTask);
+      }
     }
 
     const task_agent = async () => {
@@ -258,8 +299,11 @@ const Inside_Task = ({ route, navigation }) => {
                 <View style={{flexDirection: 'column', maxHeight: 200}}>
                   <ScrollView>
                     {subTask.map((item, index) => (
-                      <View key={index} style={{ padding: 10, borderBottomWidth: 1 }}>
+                      <View key={index} style={{ padding: 10, borderBottomWidth: 1, flexDirection: 'row', alignItems: 'center', position: 'relative'}}>
                         <Text>{'•'} {item.key}</Text>
+                        <Pressable style={{position: 'absolute', right: 0, top: 0, padding: 10}} onPress={() => deleteSubTask(index)}>
+                          <MaterialCommunityIcons name="delete-outline" size={20} color="black" />
+                        </Pressable>
                       </View>
                     ))}
                   </ScrollView>
@@ -273,7 +317,7 @@ const Inside_Task = ({ route, navigation }) => {
                   </View>
                 </KeyboardAvoidingView>
                 
-                <Pressable style={styles.submitButton} onPress={() => addTaskToFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, taskName, taskDescription, category, priority, date, time, subTask)}>
+                <Pressable style={styles.submitButton} onPress={() => handleSaveTask()}>
                     <Text style={{color: 'white', fontSize: 18}}>Save Task</Text>
                 </Pressable>
             </View>
