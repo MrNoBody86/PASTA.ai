@@ -6,7 +6,7 @@ import { SelectCountry } from 'react-native-element-dropdown'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { NavigationProp } from '@react-navigation/native'
-import { TASK_AGENT_URL } from '@/constants'
+import { TASK_AGENT_URL, SET_USER_ID } from '@/constants'
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, query, orderBy, getDocs, limit, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import axios from 'axios';
@@ -92,6 +92,7 @@ const Inside_Task = ({ route, navigation }) => {
     const [subTask, setSubTask] = useState(INsubTasks);
     const [subTaskText, setSubTaskText] = useState('');
     const [taskAIText, setTaskAIText] = useState('');
+    const [taskStatus, setTaskStatus] = useState(true); 
 
     const onChangeDate = (e, selectedDate) => {
         setDate(selectedDate);
@@ -185,6 +186,8 @@ const Inside_Task = ({ route, navigation }) => {
 
     const task_agent = async () => {
       console.log(taskAIText)
+      // const setUserId = await axios.get(`${SET_USER_ID}/${FIREBASE_AUTH.currentUser?.uid}`);
+      // console.log(setUserId.data);
       const response = await axios.get(`${TASK_AGENT_URL}/${taskAIText}`);
       console.log(response.data);
       var AIResponse = response.data;
@@ -195,6 +198,7 @@ const Inside_Task = ({ route, navigation }) => {
         setPriority(AIResponse['taskPriority']);
         setSubTask(AIResponse['subTasks']);
       } catch (error) {
+          setTaskStatus(false);
           console.error("Invalid JSON format:", error);
       }    
     }
@@ -214,6 +218,8 @@ const Inside_Task = ({ route, navigation }) => {
                 </View>      
               </View>
             )}
+
+            
             
             <View style={styles.title}>
                 <Text style={{fontSize: 18, fontWeight: 'bold'}}>Task</Text>
