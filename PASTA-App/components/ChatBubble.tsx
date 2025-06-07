@@ -126,60 +126,6 @@ const ChatBubble = ({ role, text, messageId, rlEpisodeId, onSpeech,}) => {
     }
   };
 
-
-  // const handleRatingChange = (newRating: number) => {
-  //   setRating(newRating);
-  //   console.log(`Rated ${newRating} stars for: ${text}`);
-  // };
-
-  // // Send feedback to firestore
-  // async function handleSubmit(db, userUid, messageId, starRating) {
-  //   if (submitted || rating === 0) return;
-  //   try {
-  //       const feedbackRef = collection(db, "users", userUid, "feedback");
-  //       const feedback = {
-  //           messageId: messageId,
-  //           starRating: starRating,
-  //           timestamp: serverTimestamp(),
-  //       };
-  //       const docRef = await addDoc(feedbackRef, feedback);
-  //       setSubmitted(true);
-  //       console.log("Rating submitted:", feedback);
-  //       console.log("Document written with ID: ", docRef.id);
-  //       return docRef;
-  //       } catch (e) {
-  //         console.error("Error submitting the rating: ", e);
-  //         throw e;
-  //       }
-  // }
-
-  // useEffect(() => {
-  //   const checkFeedbackSubmitted = async () => {
-  //     if (!FIREBASE_AUTH.currentUser?.uid || !messageId) return;
-  
-  //     try {
-  //       const feedbackRef = collection(FIREBASE_DB, "users", FIREBASE_AUTH.currentUser.uid, "feedback");
-  //       const feedbackQuery = query(feedbackRef, where("messageId", "==", messageId));
-  //       const snapshot = await getDocs(feedbackQuery);
-  
-  //       if (!snapshot.empty) {
-  //         setSubmitted(true); // Feedback exists, disable rating
-  //         const existing = snapshot.docs[0].data();
-  //         setRating(existing.starRating); // Optional: show previously selected stars
-  //       }
-  //     } catch (e) {
-  //       console.error("Error checking for existing feedback: ", e);
-  //     }
-  //   };
-  
-  //   checkFeedbackSubmitted();
-  // }, [messageId]);
-  
-
-  // // const handlePress = (index: number) => {
-  // //   onRatingChange(index + 1); // Rating is 1-indexed
-  // // };
-
   return (
     <View style={[styles.chatItem, role === "user" ? styles.userChatItem : styles.modelChatItem]}>
         <Markdown style={markdownStyles}>{text}</Markdown>
@@ -230,62 +176,6 @@ const ChatBubble = ({ role, text, messageId, rlEpisodeId, onSpeech,}) => {
     </View>
 );
 };
-
-//   return (
-//     <View
-//       style={[
-//         styles.chatItem,
-//         role === "user" ? styles.userChatItem : styles.modelChatItem,  // Apply different styles based on the sender
-//       ]}>
-//       <Markdown style={markdownStyles}>{text}</Markdown>
-
-//       {role === "model" && (
-//       <>
-//          {/* Speaker button for TTS */}
-//         <TouchableOpacity style={styles.speakerIcon} onPress={onSpeech}>
-//           <Ionicons name="volume-high-outline" size={24} color="#fff" />
-//         </TouchableOpacity>
-
-//         {/* Rating & submit section */}
-//         {!submitted && (
-//             <View style={styles.ratingContainer}>
-//               {[...Array(5)].map((_, i) => (
-//                 <TouchableOpacity key={i} onPress={() => handleRatingChange(i + 1)}>
-//                   <Ionicons
-//                     name={i < rating ? 'star' : 'star-outline'}
-//                     size={24}
-//                     color="#FFD700"
-//                   />
-//                 </TouchableOpacity>
-//               ))}
-//               <Pressable
-//                 onPress={() => handleSubmit(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, messageId, rating)}
-//                 disabled={rating === 0}
-//                 style={[
-//                   styles.submitButton,
-//                   { opacity: rating === 0 ? 0.5 : 1 },
-//                 ]}
-//               >
-//                 <MaterialCommunityIcons name="check" size={25} color="white" />
-//               </Pressable>
-//             </View>
-//           )}
-
-//           {/* Show confirmation once submitted */}
-//           {submitted && (
-//             <View style={styles.feedbackSubmitted}>
-//               <MaterialCommunityIcons
-//                 name="check-circle"
-//                 size={22}
-//                 color="#4CAF50"
-//               />
-//             </View>
-//           )}
-//       </>
-//       )}
-//     </View>
-//   );
-// };
 
 export default ChatBubble;
 
