@@ -232,7 +232,7 @@ const Inside_Task = ({ route, navigation }) => {
           `${TASK_AGENT_URL}/${encodeURIComponent(taskAIText)}`,
           {
             headers: {
-              'Authorization': 'Bearer ${idToken}',
+              'Authorization': `Bearer ${idToken}`,
             }
           }
         );

@@ -101,7 +101,7 @@ export function Fitness_Chat() {
             // await axios.get(`${SET_USER_ID}/${currentUserID}`);
             // console.log("User ID set for Fitness API:", currentUserID);
 
-            const idToken = await currentUser.getIDToken();
+            const idToken = await currentUser.getIdToken();
 
             const apiResponse = await axios.get(
                 `${FITNESS_API_URL}/${encodeURIComponent(userMessageText)}`,
