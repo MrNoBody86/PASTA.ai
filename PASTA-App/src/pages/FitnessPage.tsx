@@ -18,6 +18,7 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
     const [stepCount, setStepCount] = useState(0);
     const [calories, setCalories] = useState(0);
     const [distance, setDistance] = useState(0);
+    const [screenLoading, setScreenLoading] = useState(true);
 
     async function getActivitiesFromFireBase(db, userUid, messageLimit) {
         const messagesRef = collection(db, "users", userUid, "activities");
