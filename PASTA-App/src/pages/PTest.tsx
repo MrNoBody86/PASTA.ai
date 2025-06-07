@@ -1,13 +1,13 @@
 import React from 'react'
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Pressable, ScrollView } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Pressable, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import Option from '../../components/Option';
 import { useEffect, useState } from 'react';
 import { quizData } from '../../questions';
 import Results from '@/src/pages/Results';
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
 import { NavigationProp } from '@react-navigation/native';
-import { collection, addDoc, serverTimestamp, orderBy, query, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, orderBy, query, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 // Main component for the personality test
 const PTest = () => {
@@ -50,12 +50,24 @@ const PTest = () => {
   let newNEU = scoreNEU;
   let newOPE = scoreOPE;
 
+  // State to manage loading state
+  const [isLoading, setIsLoading] = useState(true);
+
   // Load quiz data and previous scores on component mount
   useEffect(() => {
     setQuestions(quizData);
-    getPersonalityQuestionScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
-  }, []);
-  
+    const loadInitialData = async () => {
+        const userId = FIREBASE_AUTH.currentUser?.uid;
+        if (!userId) return;
+        // Await the fetch functions to ensure data is loaded before any logic runs
+        await getPersonalityScores(FIREBASE_DB, userId);
+        await getPersonalityQuestionScores(FIREBASE_DB, userId);
+        setIsLoading(false);
+    };
+    loadInitialData();
+    console.log("Current User ID:", FIREBASE_AUTH.currentUser?.uid);
+  }, [FIREBASE_AUTH.currentUser?.uid]);
+
   let currentQuestion = questions[currentQuestionIndex];
 
   // Function to save individual question scores to Firebase
@@ -117,6 +129,9 @@ const PTest = () => {
         questionScores.push(messageData);
       });
     setQuestionScore(questionScores);
+    if (questionScores.length > 0) {
+      setShowResult(true);
+    }
 }
 
   // Function to fetch overall personality scores from Firebase
@@ -148,6 +163,26 @@ const PTest = () => {
     }
   }
 
+  async function updatePersonalityQuestionScores(db, userUid, questionId, updatedQuestion) {
+    try {
+      const activityRef = doc(db, "users", userUid, "personalityQuestionScores", questionId);
+      await updateDoc(activityRef, updatedQuestion);
+    } catch (error) {
+      console.error("Error updating activity:", error);
+      }
+  }
+
+  async function updatePersonalityScores(db, userUid, scoresId, updatedScores) {
+    try {
+      const activityRef = doc(db, "users", userUid, "personalityScores", scoresId);
+      await updateDoc(activityRef, updatedScores);
+    } catch (error) {
+      console.error("Error updating activity:", error);
+      }
+  }
+
+
+
   // Track percentage completion of the quiz
   useEffect(() => {
     let percentage = (currentQuestionIndex + 1) * 2;
@@ -155,36 +190,35 @@ const PTest = () => {
   }, [currentQuestionIndex]);
 
   // Handle answer selection and score calculation
-  const handleNext = () => {
-
+  const handleNext = async () => {
+    
     const questionData = {
-      question: currentQuestion?.question,
-      score: scoreOption[selectedOption],
-      trait: currentQuestion?.trait,
+        question: currentQuestion?.question,
+        score: scoreOption[selectedOption],
+        trait: currentQuestion?.trait,
     }
     const updatedQuestions = [...questionsAnswered, questionData];
     setQuestionsAnswered(updatedQuestions);
 
     if (currentQuestion?.trait === "Extraversion"){
-      newEXT = scoreEXT + (scoreOption[selectedOption]*currentQuestion?.value);
-      setEXT(newEXT);
+        newEXT = scoreEXT + (scoreOption[selectedOption]*currentQuestion?.value);
+        setEXT(newEXT);
     } else if (currentQuestion?.trait === "Agreeableness"){
-      newAGG = scoreAGG + (scoreOption[selectedOption]*currentQuestion?.value);
-      setAGG(newAGG);
+        newAGG = scoreAGG + (scoreOption[selectedOption]*currentQuestion?.value);
+        setAGG(newAGG);
     } else if (currentQuestion?.trait === "Conscientiousness"){
-      newCON = scoreCON + (scoreOption[selectedOption]*currentQuestion?.value);
-      setCON(newCON);
+        newCON = scoreCON + (scoreOption[selectedOption]*currentQuestion?.value);
+        setCON(newCON);
     } else if (currentQuestion?.trait === "Neuroticism"){
-      newNEU = scoreNEU + (scoreOption[selectedOption]*currentQuestion?.value);
-      setNEU(newNEU);
+        newNEU = scoreNEU + (scoreOption[selectedOption]*currentQuestion?.value);
+        setNEU(newNEU);
     } else if (currentQuestion?.trait === "Openess"){
-      newOPE = scoreOPE + (scoreOption[selectedOption]*currentQuestion?.value);
-      setOPE(newOPE);
+        newOPE = scoreOPE + (scoreOption[selectedOption]*currentQuestion?.value);
+        setOPE(newOPE);
     }
-
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex((prevQuestion) => prevQuestion + 1);
-      setSelectedOption("");
+        setCurrentQuestionIndex((prevQuestion) => prevQuestion + 1);
+        setSelectedOption("");
     } else {
       const questionData = {
         question: currentQuestion?.question,
@@ -196,11 +230,64 @@ const PTest = () => {
       setQuestionsAnswered(updatedQuestions);
       
       console.log("Questions Answered", updatedQuestions);
-      for (let i = 0; i < updatedQuestions.length; i++){
-        addPersonalityQuestionScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, updatedQuestions[i].question, updatedQuestions[i].score, updatedQuestions[i].trait);
+      console.log("Firebase questionScore:", questionScore);
+
+      for (const answeredQuestion of updatedQuestions) { // Using 'updatedQuestions' from your code
+
+          console.log("Answered Question:", answeredQuestion);
+          
+    
+          // Find the existing document in our state that matches the current question
+          const existingDoc = questionScore.find(
+              (doc) => doc.question === answeredQuestion.question
+          );
+
+          console.log("Existing Document:", existingDoc);
+
+          const dataToSave = {
+              question: answeredQuestion.question,
+              score: answeredQuestion.score,
+              trait: answeredQuestion.trait,
+              timestamp: serverTimestamp()
+          };
+
+          if (existingDoc && existingDoc.id) {
+              // If we found a matching document with an ID, UPDATE it
+              // console.log(`Updating existing question: ${existingDoc.id}`);
+              await updatePersonalityQuestionScores(
+                  FIREBASE_DB, 
+                  FIREBASE_AUTH.currentUser?.uid, 
+                  existingDoc.id, // Use the ID we found
+                  dataToSave
+              );
+          } else {
+              // If no matching document was found, ADD a new one
+              // console.log(`Adding new question: ${answeredQuestion.question}`);
+              await addPersonalityQuestionScores(
+                  FIREBASE_DB, 
+                  FIREBASE_AUTH.currentUser?.uid, 
+                  answeredQuestion.question, 
+                  answeredQuestion.score, 
+                  answeredQuestion.trait
+              );
+          }
       }
+
       // console.log("Scores:", newEXT, newAGG, newCON, newNEU, newOPE);
-      addPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, newEXT, newAGG, newCON, newNEU, newOPE);
+      if (personalityScore.length > 0) {
+        // Update latest personality score
+        await updatePersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, personalityScore[0].id, {
+          scoreEXT: newEXT,
+          scoreAGG: newAGG,
+          scoreCON: newCON,
+          scoreNEU: newNEU,
+          scoreOPE: newOPE,
+          timestamp: serverTimestamp()
+        });
+      } else {
+        // Add new personality score
+        await addPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, newEXT, newAGG, newCON, newNEU, newOPE);
+      }
       
       setShowResult(true);
 
@@ -265,7 +352,21 @@ const PTest = () => {
     });
   };
 
-  const restart = () => {
+  const confirmRestart = () => {
+    Alert.alert(
+      "Restart Quiz",
+      "Are you sure you want to restart the quiz? Your current progress will be lost.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { text: "OK", onPress: () => handleRestart() }
+      ]
+    );
+  }
+
+  const handleRestart = () => {
     setEXT(20);
     setAGG(14);
     setCON(14);
@@ -277,19 +378,19 @@ const PTest = () => {
     setQuestionsAnswered([]);
   }
 
-  useEffect(() => {
-    if (showResult || questionScore.length !== 0) {
-      getPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
-    }
-  }, [showResult, questionScore.length]);
-
 
   // Display results if quiz is completed
-  if (showResult || questionScore.length != 0){
-    return  <Results restart={restart} scoreEXT={scoreEXT} scoreAGG={scoreAGG} scoreCON={scoreCON} scoreNEU={scoreNEU} scoreOPE={scoreOPE} />
+  if (showResult && !isLoading) {
+    return  <Results restart={confirmRestart} scoreEXT={scoreEXT} scoreAGG={scoreAGG} scoreCON={scoreCON} scoreNEU={scoreNEU} scoreOPE={scoreOPE} />
   }
 
   return (
+    isLoading ? (
+    <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+      <ActivityIndicator size="large" color="#004643" />
+      <Text style={{marginTop: 10, fontWeight: "600"}}>Loading...</Text>
+    </View>
+    ) : (
     <View style={styles.container}>
       <StatusBar style="auto" />
       <SafeAreaView>
@@ -318,7 +419,7 @@ const PTest = () => {
           <Option setSelectedOption={setSelectedOption} checkIfSelected={checkOptionThree} isSelected={checkIfSelected.option3} option={currentQuestion?.options[2]} />
           <Option setSelectedOption={setSelectedOption} checkIfSelected={checkOptionFour} isSelected={checkIfSelected.option4} option={currentQuestion?.options[3]} />
           <Option setSelectedOption={setSelectedOption} checkIfSelected={checkOptionFive} isSelected={checkIfSelected.option5} option={currentQuestion?.options[4]} />
-          </View>
+        </View>
 
         <TouchableOpacity onPress={handleNext} activeOpacity={.8} style={[styles.btn, {backgroundColor: selectedOption ? "#004643" : "#A9A9A9"}]} disabled={!selectedOption}>
           <Text style={{color:"white", fontWeight: "600"}} >Next</Text>
@@ -326,6 +427,8 @@ const PTest = () => {
         </ScrollView>
       </SafeAreaView>
     </View>
+    )
+    
   )
 }
 

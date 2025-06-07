@@ -87,7 +87,14 @@ export function Fitness_Chat() {
     // }, []);
 
     const handleUserInput = async () => {
-        if (!userInput.trim() || !currentUserID) return;
+        if (!userInput.trim()) return;
+
+        const currentUser = FIREBASE_AUTH.currentUser;
+        if (!currentUser) {
+            setError("User not authenticated. Please log in.");
+            setLoading(false);
+            return;
+        }
 
         const userMessageText = userInput;
         setUserInput(""); // Clear input immediately
@@ -104,11 +111,20 @@ export function Fitness_Chat() {
         setError('');
 
         try {
-            // Ensure backend knows the user (this might be better handled with auth tokens per request)
-            await axios.get(`${SET_USER_ID}/${currentUserID}`);
-            console.log("User ID set for Fitness API:", currentUserID);
+            // // Ensure backend knows the user (this might be better handled with auth tokens per request)
+            // await axios.get(`${SET_USER_ID}/${currentUserID}`);
+            // console.log("User ID set for Fitness API:", currentUserID);
 
-            const apiResponse = await axios.get(`${FITNESS_API_URL}/${encodeURIComponent(userMessageText)}`);
+            const idToken = await currentUser.getIdToken();
+
+            const apiResponse = await axios.get(
+                `${FITNESS_API_URL}/${encodeURIComponent(userMessageText)}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${idToken}` // Send ID Token in Authorization header
+                    }
+                }
+            );
             
             console.log("Backend API Response Data:", apiResponse.data);
 
@@ -137,7 +153,11 @@ export function Fitness_Chat() {
             }
         } catch (err: any) {
             console.error("Error during handleUserInput:", err);
-            setError(err.response?.data?.error || err.message || "An error occurred. Please try again.");
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                setError("Authentication failed. Please log in again.");
+            } else {
+                setError(err.response?.data?.error || err.message || "An error occurred. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -258,7 +278,7 @@ export function Fitness_Chat() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Fitness ChatBot (RL Enabled)</Text>
+            <Text style={styles.title}>Fitness ChatBot</Text>
             <FlatList
                 data={chat}
                 renderItem={renderChatItem}
