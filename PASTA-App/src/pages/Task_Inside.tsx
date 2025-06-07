@@ -191,16 +191,7 @@ const Inside_Task = ({ route, navigation }) => {
         taskTime: time,
         subTasks: subTask,
         completed: completed,
-        // timestamp: timestamp,
-        // For updates, we might not want to send the old timestamp.
-        // Firestore handles `serverTimestamp()` on creation, and `lastUpdated` on update.
       };
-
-      // if (taskId && timestamp) {
-      // // If it's an existing task, we want to preserve its original timestamp.
-      // // If it's a new task, addTaskToFireBase will use serverTimestamp().
-      //   taskData.timestamp = timestamp; // Keep the original timestamp for updates
-      // }
 
       if(taskId) {
         updateTaskInFirebase(FIREBASE_DB, currentUserID, taskId, taskData);
@@ -222,9 +213,6 @@ const Inside_Task = ({ route, navigation }) => {
 
       setIsLoadingAI(true);
       console.log("Task Agent AI text input: ", taskAIText, "for UserID: ", currentUser.uid);
-      // const response = await axios.get(`${TASK_AGENT_URL}/${taskAIText}`);
-      // console.log(response.data);
-      // var AIResponse = response.data;
       try {
         const idToken = await currentUser.getIdToken();
 
