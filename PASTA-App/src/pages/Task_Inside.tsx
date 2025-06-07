@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Button, FlatList, KeyboardAvoidingView, VirtualizedList } from 'react-native'
+import { View, Text, StyleSheet, Button, FlatList, KeyboardAvoidingView, VirtualizedList, ActivityIndicator } from 'react-native'
 import { useState } from 'react'
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
 import { Pressable, ScrollView, TextInput } from 'react-native-gesture-handler'
@@ -6,6 +6,7 @@ import { SelectCountry } from 'react-native-element-dropdown'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { NavigationProp } from '@react-navigation/native'
+import { TASK_AGENT_URL, SET_USER_ID } from '@/constants'
 import { TASK_AGENT_URL, SET_USER_ID } from '@/constants'
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, query, orderBy, getDocs, limit, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
@@ -92,7 +93,7 @@ const Inside_Task = ({ route, navigation }) => {
     const [subTask, setSubTask] = useState(INsubTasks);
     const [subTaskText, setSubTaskText] = useState('');
     const [taskAIText, setTaskAIText] = useState('');
-    const [taskStatus, setTaskStatus] = useState(true); 
+    const [isLoadingAI, setIsLoadingAI] = useState(false); // For loading indicator
 
     const onChangeDate = (e, selectedDate) => {
         setDate(selectedDate);
@@ -128,6 +129,10 @@ const Inside_Task = ({ route, navigation }) => {
     }
 
     async function addTaskToFireBase(db, userUid, taskName, taskDescription, taskCategory, taskPriority, taskDate, taskTime, subTasks) {
+      if (!userUid) {
+        console.error("Error adding task: User not authenticated.");
+        return;
+      }
       try {
           const messagesRef = collection(db, "users", userUid, "tasks");
           const newMessage = {
@@ -145,17 +150,26 @@ const Inside_Task = ({ route, navigation }) => {
           console.log("Document written with ID: ", docRef.id);
           navigation.navigate('Task')
           return docRef;
-          } catch (e) {
-            console.error("Error adding document: ", e);
-            throw e;
-          }
+        } catch (e) {
+          console.error("Error adding document: ", e);
+          throw e;
+        }
     }
 
     async function updateTaskInFirebase(db, userUid, taskId, updatedTask) {
+      if (!userUid || !taskId) {
+        console.error("Error updating task: User not authenticated or Task ID missing.");
+        return;
+      }
       try {
         const taskRef = doc(db, "users", userUid, "tasks", taskId);
-        await updateDoc(taskRef, updatedTask);
-        console.log("Task updated successfully");
+        // We don't want to overwrite the original creation timestamp when updating
+        const { timestamp: originalTimestamp, ...taskDataToUpdate } = updatedTask; 
+        await updateDoc(taskRef, {
+          ...taskDataToUpdate,
+            lastUpdated: serverTimestamp(), // Add a last updated timestamp
+        });
+        console.log("Task updated successfully: ", taskId);
         navigation.navigate('Task'); // or show confirmation
       } catch (error) {
         console.error("Error updating task:", error);
@@ -163,6 +177,12 @@ const Inside_Task = ({ route, navigation }) => {
     }
 
     const handleSaveTask = () => {
+      const currentUserID = FIREBASE_AUTH.currentUser?.uid;
+      if (!currentUserID) {
+          console.error("Cannot save task: User not authenticated.");
+          // Show error to user
+          return;
+      }
       const taskData = {
         taskName: taskName,
         taskDescription: taskDescription,
@@ -172,35 +192,91 @@ const Inside_Task = ({ route, navigation }) => {
         taskTime: time,
         subTasks: subTask,
         completed: completed,
-        timestamp: timestamp,
+        // timestamp: timestamp,
+        // For updates, we might not want to send the old timestamp.
+        // Firestore handles `serverTimestamp()` on creation, and `lastUpdated` on update.
       };
 
-       const userUid = FIREBASE_AUTH.currentUser?.uid;
+      // if (taskId && timestamp) {
+      // // If it's an existing task, we want to preserve its original timestamp.
+      // // If it's a new task, addTaskToFireBase will use serverTimestamp().
+      //   taskData.timestamp = timestamp; // Keep the original timestamp for updates
+      // }
 
       if(taskId) {
-        updateTaskInFirebase(FIREBASE_DB, userUid, taskId, taskData);
+        updateTaskInFirebase(FIREBASE_DB, currentUserID, taskId, taskData);
       } else {
-        addTaskToFireBase(FIREBASE_DB, userUid, taskName, taskDescription, category, priority, date, time, subTask);
+        addTaskToFireBase(FIREBASE_DB, currentUserID, taskName, taskDescription, category, priority, date, time, subTask);
       }
     }
 
     const task_agent = async () => {
-      console.log(taskAIText)
-      // const setUserId = await axios.get(`${SET_USER_ID}/${FIREBASE_AUTH.currentUser?.uid}`);
-      // console.log(setUserId.data);
-      const response = await axios.get(`${TASK_AGENT_URL}/${taskAIText}`);
-      console.log(response.data);
-      var AIResponse = response.data;
+      const currentUser = FIREBASE_AUTH.currentUser;
+      if(!currentUser){
+        console.error("Task Agent: User not authenticated");
+        return;
+      }
+      if(!taskAIText.trim()) {
+        console.warn("Task Agent: Input text to task agent is empty");
+        return;
+      }
+
+      setIsLoadingAI(true);
+      console.log("Task Agent AI text input: ", taskAIText, "for UserID: ", currentUser.uid);
+      // const response = await axios.get(`${TASK_AGENT_URL}/${taskAIText}`);
+      // console.log(response.data);
+      // var AIResponse = response.data;
       try {
-        setTaskName(AIResponse['taskName']);
-        setTaskDescription(AIResponse['taskDescription']);
-        setCategory(AIResponse['taskCategory']);
-        setPriority(AIResponse['taskPriority']);
-        setSubTask(AIResponse['subTasks']);
-      } catch (error) {
-          setTaskStatus(false);
-          console.error("Invalid JSON format:", error);
-      }    
+        const idToken = await currentUser.getIdToken();
+
+        const response = await axios.get(
+          `${TASK_AGENT_URL}/${encodeURIComponent(taskAIText)}`,
+          {
+            headers: {
+              'Authorization': 'Bearer ${idToken}',
+            }
+          }
+        );
+        console.log("Task Agent API Response:", response.data);
+        
+        const AIResponse = response.data;
+        if (AIResponse.error) {
+          console.error("Task Agent Error from backend:", AIResponse.error);
+          // Display error to user (e.g., using a state variable and a Text component)
+          // alert(`AI Error: ${AIResponse.error}`); // Simple alert for now
+          return;
+        }
+
+        // Update state with AI suggestions, providing fallbacks to current values
+          setTaskName(AIResponse?.taskName || taskName);
+          setTaskDescription(AIResponse?.taskDescription || taskDescription);
+          setCategory(AIResponse?.taskCategory || category);
+          setPriority(AIResponse?.taskPriority || priority);
+          if (AIResponse?.subTasks && Array.isArray(AIResponse.subTasks)) {
+            setSubTask(AIResponse.subTasks);
+        } else if (AIResponse?.subTasks) { // Handle if it's not an array but exists
+            console.warn("AI returned subTasks but not in expected array format:", AIResponse.subTasks);
+        }
+      } catch (error: any) {
+        console.error("Error calling Task Agent API:", error);
+        if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            console.error("API Error Data:", error.response.data);
+            console.error("API Error Status:", error.response.status);
+            // alert(`API Error: ${error.response.data.error || error.message}`);
+        } else if (error.request) {
+            // The request was made but no response was received
+            console.error("API No Response:", error.request);
+            // alert("API Error: No response from server.");
+        } else {
+            // Something happened in setting up the request that triggered an Error
+            console.error("API Request Setup Error:", error.message);
+            // alert(`API Error: ${error.message}`);
+        }
+      } finally {
+          setIsLoadingAI(false);
+      }
     }
 
     return (
@@ -213,7 +289,11 @@ const Inside_Task = ({ route, navigation }) => {
                 <View style={{flexDirection: 'row', gap: 10}}>
                   <TextInput style={{backgroundColor: 'white', borderRadius: 10, width: '90%'}} placeholder='Auto-fill your task Details' onChangeText={setTaskAIText} value={taskAIText}></TextInput>
                   <Pressable style={{backgroundColor: 'black', borderRadius: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center'}} onPress={task_agent}>
-                    <MaterialCommunityIcons name="send" size={25} color='white'/>
+                  {isLoadingAI ? (
+                        <ActivityIndicator size="small" color="white" />
+                    ) : (
+                        <MaterialCommunityIcons name="send" size={20} color='white'/>
+                    )}
                   </Pressable>
                 </View>      
               </View>
