@@ -40,9 +40,9 @@ const Results = ({
         <Text style={{fontWeight: "700", fontSize: 16, color: "#004643"}} >Openness to Experience:{scoreOPE}/40</Text>
 
         {/* Button for restarting the quiz (currently commented out) */}
-        {/* <TouchableOpacity onPress={restart} activeOpacity={.8} style={styles.btn} >
+        <TouchableOpacity onPress={restart} activeOpacity={.8} style={styles.btn} >
             <Text>Restart</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     width: "100%",
-    height: 250,
+    maxHeight: 300,
     backgroundColor: "#fff",
     borderRadius: 20,
     alignItems: "center",
