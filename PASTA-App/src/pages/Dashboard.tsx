@@ -148,7 +148,10 @@ const Dashboard = () => {
             {pLoading ? (
               <ActivityIndicator size="large" color="#0000ff" style={{marginTop: 20}} />
             ) : (
-            <>
+              !scoreEXT ? (
+                <Text style={{textAlign: 'center', color: '#888', marginTop: 15 }}>No Personality Data Available</Text>
+              ) : (
+              <>
               <View style={styles.personalityBar}>
                 <Text>Extraversion</Text>
                 <ProgressBar progress={scoreEXT/40} width={screenWidth*0.45} height={10} animated={true} color="rgba(255, 140, 0, 1)"/>
@@ -170,6 +173,8 @@ const Dashboard = () => {
                 <ProgressBar progress={scoreOPE/40} width={screenWidth*0.45} height={10} animated={true} color="rgba(138, 43, 226, 1)"/>
               </View>
             </>
+              )
+            
             )}
             
         </View>
