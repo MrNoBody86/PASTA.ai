@@ -83,6 +83,7 @@ const ChatBubble = ({ role, text, messageId, rlEpisodeId, onSpeech,}) => {
   };
 
   const handleSubmitFeedback = async () => {
+    const currentUser = FIREBASE_AUTH.currentUser;
     if (isSubmitted || rating === 0 || !currentUserID || !rlEpisodeId || isLoadingFeedback) {
         console.log("Feedback submission skipped:", { isSubmitted, rating, currentUserID, rlEpisodeId });
         return;
@@ -91,12 +92,20 @@ const ChatBubble = ({ role, text, messageId, rlEpisodeId, onSpeech,}) => {
     setFeedbackError(null);
 
     try {
+        const idToken = await currentUser.getIdToken();
         // Call the backend endpoint to submit feedback for the RL episode
-        const response = await axios.post(SUBMIT_RL_EPISODE_FEEDBACK_URL, {
-            episode_id: rlEpisodeId,
-            star_rating: rating,
-            userID: currentUserID, // Backend uses global USER_ID for now
-        });
+        const response = await axios.post(
+            SUBMIT_RL_EPISODE_FEEDBACK_URL, 
+            {
+                episode_id: rlEpisodeId,
+                star_rating: rating,
+            },
+            { // Axios config
+                headers: {
+                    'Authorization': `Bearer ${idToken}`,
+                }
+            }
+        );
 
         if (response.data.success) {
             setIsSubmitted(true);
@@ -107,7 +116,11 @@ const ChatBubble = ({ role, text, messageId, rlEpisodeId, onSpeech,}) => {
         }
     } catch (err: any) {
         console.error("API error submitting RL feedback:", err);
-        setFeedbackError(err.response?.data?.error || err.message || "An API error occurred.");
+        if (err.response?.status === 401 || err.response?.status === 403) {
+            console.error("Authentication failed. Please log in again.");
+        } else {
+            console.error(err.response?.data?.error || err.message || "An API error occurred.");
+        }
     } finally {
         setIsLoadingFeedback(false);
     }
