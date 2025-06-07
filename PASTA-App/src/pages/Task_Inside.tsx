@@ -7,7 +7,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { NavigationProp } from '@react-navigation/native'
 import { TASK_AGENT_URL, SET_USER_ID } from '@/constants'
-import { TASK_AGENT_URL, SET_USER_ID } from '@/constants'
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, query, orderBy, getDocs, limit, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import axios from 'axios';

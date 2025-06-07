@@ -26,13 +26,22 @@ export function Fitness_Chat() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSpeakingSpeaker, setIsSpeaking] = useState(false);
-
+    const [screenLoading, setScreenLoading] = useState(true);
     const currentUserID = FIREBASE_AUTH.currentUser?.uid;
 
     // Fetch initial chat history (from fitnessMessages) for display
     useEffect(() => {
-        if (currentUserID) {
-            const messagesRef = collection(FIREBASE_DB, "users", currentUserID, "fitnessMessages");
+        const loadInitialData = async () => {
+            if (currentUserID) {
+                await getRecentFitnessChatbotMessages(FIREBASE_DB, currentUserID, 10);
+            }
+        };
+        loadInitialData();
+    }, []);
+
+    // // Fetch recent chat messages from Firebase
+    async function getRecentFitnessChatbotMessages(db, userUid, messageLimit) {
+        const messagesRef = collection(FIREBASE_DB, "users", currentUserID, "fitnessMessages");
             const q = query(messagesRef,
                 orderBy("timestamp", "desc"),
                 limit(10),
@@ -52,31 +61,8 @@ export function Fitness_Chat() {
                 messages = messages.reverse(); // Reverse to show most recent messages at the bottom
                 setChat(messages);
             });
-            return () => unsubscribe(); // Detach listener on unmount
-        }
-    }, [currentUserID]);
-
-    // // Fetch recent chat messages from Firebase
-    // async function getRecentFitnessChatbotMessages(db, userUid, messageLimit) {
-    //     const messagesRef = collection(db, "users", userUid, "fitnessMessages");
-    //     const q = query(
-    //         messagesRef,
-    //         orderBy("timestamp", "desc"),
-    //         limit(messageLimit)
-    //     );
-    //     const querySnapshot = await getDocs(q);
-    //     var messages = [];
-    //     querySnapshot.forEach((doc) => {
-    //         const messageData = {
-    //             parts: [{ text: doc.data().content }],
-    //             role: doc.data().sender,
-    //             id: doc.id,
-    //         };
-    //         messages.push(messageData);
-    //     });
-    //     messages = messages.reverse();
-    //     setChat(messages);
-    // }
+            setScreenLoading(false);
+    }
 
     // // Load messages on component mount
     // useEffect(() => {
@@ -277,33 +263,41 @@ export function Fitness_Chat() {
     // };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Fitness ChatBot</Text>
-            <FlatList
-                data={chat}
-                renderItem={renderChatItem}
-                keyExtractor={(item, index) => index.toString()} // Use unique message ID
-                contentContainerStyle={styles.chatContainer}
-                // inverted // Consider if new messages should appear at bottom and scroll up
-            />
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    value={userInput}
-                    onChangeText={setUserInput}
-                    placeholder="Ask fitness or nutrition questions..."
-                />
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: userInput.trim() ? '#007AFF' : '#8bbff7' }]}
-                    onPress={handleUserInput}
-                    disabled={!userInput.trim() || loading}
-                >
-                    <MaterialCommunityIcons name="send" size={25} color="white" />
-                </TouchableOpacity>
+        screenLoading ? (
+            <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+                <ActivityIndicator size="large" color="#004643" />
+                <Text style={{marginTop: 10, fontWeight: "600"}}>Loading...</Text>
             </View>
-            {loading && <ActivityIndicator style={styles.loading} size="large" color="#007AFF" />}
-            {error && <Text style={styles.error}>{error}</Text>}
-        </View>
+        ) : (
+            <View style={styles.container}>
+                <Text style={styles.title}>Fitness ChatBot</Text>
+                <FlatList
+                    data={chat}
+                    renderItem={renderChatItem}
+                    keyExtractor={(item, index) => index.toString()} // Use unique message ID
+                    contentContainerStyle={styles.chatContainer}
+                    // inverted // Consider if new messages should appear at bottom and scroll up
+                />
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.input}
+                        value={userInput}
+                        onChangeText={setUserInput}
+                        placeholder="Ask fitness or nutrition questions..."
+                    />
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: userInput.trim() ? '#007AFF' : '#8bbff7' }]}
+                        onPress={handleUserInput}
+                        disabled={!userInput.trim() || loading}
+                    >
+                        <MaterialCommunityIcons name="send" size={25} color="white" />
+                    </TouchableOpacity>
+                </View>
+                {loading && <ActivityIndicator style={styles.loading} size="large" color="#007AFF" />}
+                {error && <Text style={styles.error}>{error}</Text>}
+            </View>
+        )
+        
     );
 }
 

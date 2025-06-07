@@ -18,6 +18,7 @@ export function Chat() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [screenLoading, setScreenLoading] = useState(true);
     const API_KEY = REACT_APP_GEMINI_API_KEY;  // Gemini API key
 
     // Function to fetch recent messages from Firebase
@@ -39,13 +40,14 @@ export function Chat() {
         });
         messages = messages.reverse();  // Reverses the order to show the latest messages at the bottom
         setChat(messages);  // Updates the chat state with fetched messages
+        setScreenLoading(false);  // Hides the loading screen after fetching messages
     }
 
     // useEffect to fetch messages when the component mounts
     useEffect(() => {
         if(FIREBASE_AUTH.currentUser?.uid){
-                    getRecentChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
-                }
+            getRecentChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
+        }
                 // console.log("Stored Messages:",message);
     }, []);  // Empty dependency array to run only once on mount
     
@@ -141,32 +143,40 @@ export function Chat() {
 
     // Main UI of the Chat component
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Gemini ChatBot</Text>
-            <FlatList
-                data={chat}
-                renderItem={renderChatItem}
-                keyExtractor={(item, index) => index.toString()}
-                contentContainerStyle={styles.chatContainer}
-            /> 
-            <View style={styles.inputContainer}>
-                <TextInput 
-                    style={styles.input}
-                    value={userInput}
-                    onChangeText={setUserInput}
-                    placeholder="Type a message"
-                />
-                <TouchableOpacity 
-                    style={[styles.button, { backgroundColor: userInput.trim() ? '#007AFF' : '#8bbff7' }]}
-                    onPress={handleUserInput} 
-                    disabled={!userInput.trim()}
-                >
-                    <MaterialCommunityIcons name="send" size={25} color="white" />
-                </TouchableOpacity>
+        screenLoading ? (
+            <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+                <ActivityIndicator size="large" color="#004643" />
+                <Text style={{marginTop: 10, fontWeight: "600"}}>Loading...</Text>
             </View>
-            {loading && <ActivityIndicator size="large" color="#0000ff" />}  
-            {error && <Text style={styles.error}>{error}</Text>} 
-        </View>
+        ) : (
+            <View style={styles.container}>
+                <Text style={styles.title}>Gemini ChatBot</Text>
+                <FlatList
+                    data={chat}
+                    renderItem={renderChatItem}
+                    keyExtractor={(item, index) => index.toString()}
+                    contentContainerStyle={styles.chatContainer}
+                /> 
+                <View style={styles.inputContainer}>
+                    <TextInput 
+                        style={styles.input}
+                        value={userInput}
+                        onChangeText={setUserInput}
+                        placeholder="Type a message"
+                    />
+                    <TouchableOpacity 
+                        style={[styles.button, { backgroundColor: userInput.trim() ? '#007AFF' : '#8bbff7' }]}
+                        onPress={handleUserInput} 
+                        disabled={!userInput.trim()}
+                    >
+                        <MaterialCommunityIcons name="send" size={25} color="white" />
+                    </TouchableOpacity>
+                </View>
+                {loading && <ActivityIndicator size="large" color="#0000ff" />}  
+                {error && <Text style={styles.error}>{error}</Text>} 
+            </View>
+        )
+        
     );
 }
 

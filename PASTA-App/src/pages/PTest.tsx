@@ -8,6 +8,7 @@ import Results from '@/src/pages/Results';
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
 import { NavigationProp } from '@react-navigation/native';
 import { collection, addDoc, serverTimestamp, orderBy, query, getDocs, updateDoc, doc } from 'firebase/firestore';
+import CircularProgress from 'react-native-circular-progress-indicator'
 
 // Main component for the personality test
 const PTest = () => {
@@ -65,7 +66,6 @@ const PTest = () => {
         setIsLoading(false);
     };
     loadInitialData();
-    console.log("Current User ID:", FIREBASE_AUTH.currentUser?.uid);
   }, [FIREBASE_AUTH.currentUser?.uid]);
 
   let currentQuestion = questions[currentQuestionIndex];
@@ -185,7 +185,7 @@ const PTest = () => {
 
   // Track percentage completion of the quiz
   useEffect(() => {
-    let percentage = (currentQuestionIndex + 1) * 2;
+    let percentage = (currentQuestionIndex + 1);
     setPercentageComplete(percentage);
   }, [currentQuestionIndex]);
 
@@ -220,6 +220,7 @@ const PTest = () => {
         setCurrentQuestionIndex((prevQuestion) => prevQuestion + 1);
         setSelectedOption("");
     } else {
+      setIsLoading(true);
       const questionData = {
         question: currentQuestion?.question,
         score: scoreOption[selectedOption],
@@ -228,21 +229,13 @@ const PTest = () => {
       // console.log("Question Data", questionData);
       const updatedQuestions = [...questionsAnswered, questionData];
       setQuestionsAnswered(updatedQuestions);
-      
-      console.log("Questions Answered", updatedQuestions);
-      console.log("Firebase questionScore:", questionScore);
 
       for (const answeredQuestion of updatedQuestions) { // Using 'updatedQuestions' from your code
-
-          console.log("Answered Question:", answeredQuestion);
-          
     
           // Find the existing document in our state that matches the current question
           const existingDoc = questionScore.find(
               (doc) => doc.question === answeredQuestion.question
           );
-
-          console.log("Existing Document:", existingDoc);
 
           const dataToSave = {
               question: answeredQuestion.question,
@@ -253,7 +246,6 @@ const PTest = () => {
 
           if (existingDoc && existingDoc.id) {
               // If we found a matching document with an ID, UPDATE it
-              // console.log(`Updating existing question: ${existingDoc.id}`);
               await updatePersonalityQuestionScores(
                   FIREBASE_DB, 
                   FIREBASE_AUTH.currentUser?.uid, 
@@ -262,7 +254,6 @@ const PTest = () => {
               );
           } else {
               // If no matching document was found, ADD a new one
-              // console.log(`Adding new question: ${answeredQuestion.question}`);
               await addPersonalityQuestionScores(
                   FIREBASE_DB, 
                   FIREBASE_AUTH.currentUser?.uid, 
@@ -288,7 +279,7 @@ const PTest = () => {
         // Add new personality score
         await addPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, newEXT, newAGG, newCON, newNEU, newOPE);
       }
-      
+      setIsLoading(false);
       setShowResult(true);
 
   }
@@ -395,20 +386,18 @@ const PTest = () => {
       <StatusBar style="auto" />
       <SafeAreaView>
         <ScrollView>
-        <View style={styles.countwrapper} >
-          <Text style={{fontWeight: "600"}} >{currentQuestionIndex + 1}/{questions?.length}</Text>
-        </View>
 
         <View style={styles.questionwrapper} >
+          <CircularProgress 
+            value={percentageComplete}
+            radius={40}
+            duration={500}
+            progressValueColor='black'
+            maxValue={50}
+            activeStrokeColor='#004643'
+          />
 
-          <View style={styles.progresswrapper} >
-            <View style={[styles.progressBar, {width: `${percentageComplete}%`}]} ></View>
-            <View style={styles.progresscount} >
-                <Text style={styles.percentage}>{percentageComplete}</Text>
-            </View>
-          </View>
-
-         <Text style={{ fontWeight: "500", textAlign: "center" }}>
+         <Text style={{ fontWeight: "500", textAlign: "center", fontSize: 20, paddingTop: 20 }} >
             {currentQuestion?.question}
          </Text>
         </View>
