@@ -243,8 +243,9 @@ const Inside_Task = ({ route, navigation }) => {
     }
 
     return (
-      <ScrollView>
+      
         <SafeAreaProvider>
+          <ScrollView>
         <SafeAreaView style={styles.container}>
             {!taskId && (
               <View>
@@ -345,11 +346,11 @@ const Inside_Task = ({ route, navigation }) => {
             
             <View style={styles.subTasks}>
                 <Text style={{fontSize: 18, fontWeight: 'bold', paddingBottom: 5 }}>Add Subtasks</Text>
-                <View style={{flexDirection: 'column', maxHeight: 200}}>
+                <View style={{flexDirection: 'column', maxHeight: 150}}>
                   <ScrollView>
                     {subTask.map((item, index) => (
                       <View key={index} style={{ padding: 10, borderBottomWidth: 1, flexDirection: 'row', alignItems: 'center', position: 'relative'}}>
-                        <Text>{'•'} {item.key}</Text>
+                        <Text style={{maxWidth: 330}}>{'•'} {item.key}</Text>
                         <Pressable style={{position: 'absolute', right: 0, top: 0, padding: 10}} onPress={() => deleteSubTask(index)}>
                           <MaterialCommunityIcons name="delete-outline" size={20} color="black" />
                         </Pressable>
@@ -373,8 +374,9 @@ const Inside_Task = ({ route, navigation }) => {
             
             
         </SafeAreaView>
+        </ScrollView>
       </SafeAreaProvider>
-      </ScrollView>
+      
       
         
     )

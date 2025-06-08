@@ -141,7 +141,7 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
         <View style={styles.container}>
             <View style={styles.statsContainer}>
                 <CircularProgress
-                    value={stepCount} 
+                    value={2314} 
                     radius={70}
                     duration={2000}
                     progressValueColor='black'
@@ -150,7 +150,7 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
                     title='Steps' />
                 <View style={styles.calAndKmsContainer}>
                     <CircularProgress
-                        value={calories} 
+                        value={134} 
                         radius={45}
                         duration={2000}
                         progressValueColor='black'
@@ -158,7 +158,7 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
                         activeStrokeColor='black'
                         title='Cal' />
                     <CircularProgress
-                        value={distance} 
+                        value={2.4} 
                         radius={45}
                         duration={2000}
                         progressValueColor='black'
