@@ -172,7 +172,7 @@ const ChatBubble = ({ role, text, messageId, rlEpisodeId, onSpeech,}) => {
                         </TouchableOpacity>
                     </>
                 ) : (
-                    <TouchableOpacity style={{bottom: 5, left: 255}} onPress={onSpeech} disabled={isLoadingFeedback}>
+                    <TouchableOpacity style={{bottom: 5}} onPress={onSpeech} disabled={isLoadingFeedback}>
                         <Ionicons name="volume-high-outline" size={24} color="#fff" />
                     </TouchableOpacity>
                 )}
