@@ -65,8 +65,7 @@
     "react-native-timer-picker": "^2.1.1",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5",
-    "expo-auth-session": "~6.0.3"
+    "react-native-webview": "13.12.5"
   },
   "devDependencies": {
     "@babel/cli": "^7.26.4",
