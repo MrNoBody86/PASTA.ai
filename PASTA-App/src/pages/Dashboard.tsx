@@ -131,12 +131,13 @@ const Dashboard = () => {
     }
 
   useEffect(() => {
-      if (FIREBASE_AUTH.currentUser?.uid) {
-        getPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
-        getTaskDetailsFromFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, 10);
-        getActivitiesFromFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, 10);
-      }
-  }, [personalityScore.length, allTasks.length, allActivities.length]);
+      const loadInitialData = async () => {
+        await getPersonalityScores(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid);
+        await getTaskDetailsFromFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, 10);
+        await getActivitiesFromFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, 10);
+      };
+      loadInitialData();
+  }, []);
 
   return (
     <SafeAreaProvider>

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet ,SafeAreaView, Pressable } from 'react-native'
+import { View, Text, StyleSheet ,SafeAreaView, Pressable, ActivityIndicator } from 'react-native'
 import { useEffect, useState } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { ScrollView } from 'react-native-gesture-handler'
@@ -13,6 +13,7 @@ interface RouterProps {
 const Task_Manager = ({ navigation, route } : RouterProps) => {
     const [checkedTasks, setCheckedTasks] = useState<{ [key: string]: boolean }>({});
     const [allTasks, setAllTasks] = useState([]);
+    const [screenLoading, setScreenLoading] = useState(true);
 
     async function getTaskDetailsFromFireBase(db, userUid, messageLimit) {
         const messagesRef = collection(db, "users", userUid, "tasks");
@@ -44,6 +45,7 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
             });
             setCheckedTasks(initialCheckboxes);
             setAllTasks(fetchedTasks);
+            setScreenLoading(false);
         }
 
     useEffect(() => {
@@ -91,99 +93,107 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
     }
     
   return (
+    screenLoading ? (
+      <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+        <ActivityIndicator size="large" color="#004643" />
+        <Text style={{marginTop: 10, fontWeight: "600"}}>Loading...</Text>
+      </View>
+    ) : (
     <SafeAreaView style={styles.container}>
-  <Text style={styles.header}>Your Tasks</Text>
+      <Text style={styles.header}>Your Tasks</Text>
 
-  {allTasks.length === 0 ? (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ fontSize: 18, color: 'gray' }}>No tasks created</Text>
-    </View>
-  ) : (
-    <ScrollView style={styles.taskRows}>
-      {allTasks.map((item, index) => {
-        const isChecked = checkedTasks[item.taskId] || false;
-        const iconName = isChecked ? 'checkbox-marked' : 'checkbox-blank-outline';
-        return (
-          <View key={index} style={styles.taskContainer}>
-            <Pressable style={styles.checkbox} onPress={() => toggleCheckbox(item.taskId)}>
-              <MaterialCommunityIcons name={iconName} size={25} color="black" />
-            </Pressable>
-            <View style={{ paddingLeft: 10, width: '53%' }}>
-              <Text
-                style={[
-                  styles.taskTitle,
-                  isChecked && { textDecorationLine: 'line-through', color: 'gray' },
-                ]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {item.taskName}
-              </Text>
-              <View style={styles.taskDetails}>
-                <Text style={styles.date}>{item.taskDate.toLocaleDateString()}</Text>
-                <Text>{item.taskCategory}</Text>
-                <Text>{item.taskPriority}</Text>
+      {allTasks.length === 0 ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 18, color: 'gray' }}>No tasks created</Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.taskRows}>
+          {allTasks.map((item, index) => {
+            const isChecked = checkedTasks[item.taskId] || false;
+            const iconName = isChecked ? 'checkbox-marked' : 'checkbox-blank-outline';
+            return (
+              <View key={index} style={styles.taskContainer}>
+                <Pressable style={styles.checkbox} onPress={() => toggleCheckbox(item.taskId)}>
+                  <MaterialCommunityIcons name={iconName} size={25} color="black" />
+                </Pressable>
+                <View style={{ paddingLeft: 10, width: '53%' }}>
+                  <Text
+                    style={[
+                      styles.taskTitle,
+                      isChecked && { textDecorationLine: 'line-through', color: 'gray' },
+                    ]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {item.taskName}
+                  </Text>
+                  <View style={styles.taskDetails}>
+                    <Text style={styles.date}>{item.taskDate.toLocaleDateString()}</Text>
+                    <Text>{item.taskCategory}</Text>
+                    <Text>{item.taskPriority}</Text>
+                  </View>
+                </View>
+
+                <Pressable
+                  style={styles.viewTaskButton}
+                  onPress={() => {
+                    navigation.navigate('TaskView', {
+                      INtaskId: item.taskId,
+                      INtaskName: item.taskName,
+                      INtaskDescription: item.taskDescription,
+                      INtaskCategory: item.taskCategory,
+                      INtaskPriority: item.taskPriority,
+                      INtaskDate: item.taskDate,
+                      INtaskTime: item.taskTime,
+                      INsubTasks: item.subTasks,
+                      INcompleted: item.completed,
+                      INtimestamp: item.timestamp,
+                    });
+                  }}
+                >
+                  <View style={styles.viewTask}>
+                    <MaterialCommunityIcons name="clipboard-outline" size={30} color="black" />
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  style={styles.deleteTaskButton}
+                  onPress={() => deleteTaskFromFirebase(item.taskId, index)}
+                >
+                  <View style={styles.deleteTask}>
+                    <MaterialCommunityIcons name="delete-outline" size={25} color="black" />
+                  </View>
+                </Pressable>
               </View>
-            </View>
+            );
+          })}
+        </ScrollView>
+      )}
 
-            <Pressable
-              style={styles.viewTaskButton}
-              onPress={() => {
-                navigation.navigate('TaskView', {
-                  INtaskId: item.taskId,
-                  INtaskName: item.taskName,
-                  INtaskDescription: item.taskDescription,
-                  INtaskCategory: item.taskCategory,
-                  INtaskPriority: item.taskPriority,
-                  INtaskDate: item.taskDate,
-                  INtaskTime: item.taskTime,
-                  INsubTasks: item.subTasks,
-                  INcompleted: item.completed,
-                  INtimestamp: item.timestamp,
-                });
-              }}
-            >
-              <View style={styles.viewTask}>
-                <MaterialCommunityIcons name="clipboard-outline" size={30} color="black" />
-              </View>
-            </Pressable>
-
-            <Pressable
-              style={styles.deleteTaskButton}
-              onPress={() => deleteTaskFromFirebase(item.taskId, index)}
-            >
-              <View style={styles.deleteTask}>
-                <MaterialCommunityIcons name="delete-outline" size={25} color="black" />
-              </View>
-            </Pressable>
-          </View>
-        );
-      })}
-    </ScrollView>
-  )}
-
-  <View style={styles.addTask}>
-    <Pressable
-      style={styles.addTaskButton}
-      onPress={() => {
-        navigation.navigate('TaskView', {
-          INtaskId: '',
-          INtaskName: '',
-          INtaskDescription: '',
-          INtaskCategory: 'Personal',
-          INtaskPriority: 'Medium',
-          INtaskDate: new Date(),
-          INtaskTime: new Date(),
-          INsubTasks: [],
-          INcompleted: false,
-          INtimestamp: serverTimestamp(),
-        });
-      }}
-    >
-      <MaterialCommunityIcons name="plus" size={25} color="black" />
-    </Pressable>
-  </View>
-</SafeAreaView>
+      <View style={styles.addTask}>
+        <Pressable
+          style={styles.addTaskButton}
+          onPress={() => {
+            navigation.navigate('TaskView', {
+              INtaskId: '',
+              INtaskName: '',
+              INtaskDescription: '',
+              INtaskCategory: 'Personal',
+              INtaskPriority: 'Medium',
+              INtaskDate: new Date(),
+              INtaskTime: new Date(),
+              INsubTasks: [],
+              INcompleted: false,
+              INtimestamp: serverTimestamp(),
+            });
+          }}
+        >
+          <MaterialCommunityIcons name="plus" size={25} color="black" />
+        </Pressable>
+      </View>
+    </SafeAreaView>
+    )
+    
 
     
   )

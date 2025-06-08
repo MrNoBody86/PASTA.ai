@@ -26,13 +26,22 @@ export function Fitness_Chat() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSpeakingSpeaker, setIsSpeaking] = useState(false);
-
+    const [screenLoading, setScreenLoading] = useState(true);
     const currentUserID = FIREBASE_AUTH.currentUser?.uid;
 
     // Fetch initial chat history (from fitnessMessages) for display
     useEffect(() => {
-        if (currentUserID) {
-            const messagesRef = collection(FIREBASE_DB, "users", currentUserID, "fitnessMessages");
+        const loadInitialData = async () => {
+            if (currentUserID) {
+                await getRecentFitnessChatbotMessages(FIREBASE_DB, currentUserID, 10);
+            }
+        };
+        loadInitialData();
+    }, []);
+
+    // // Fetch recent chat messages from Firebase
+    async function getRecentFitnessChatbotMessages(db, userUid, messageLimit) {
+        const messagesRef = collection(FIREBASE_DB, "users", currentUserID, "fitnessMessages");
             const q = query(messagesRef,
                 orderBy("timestamp", "desc"),
                 limit(10),
@@ -52,39 +61,8 @@ export function Fitness_Chat() {
                 messages = messages.reverse(); // Reverse to show most recent messages at the bottom
                 setChat(messages);
             });
-            return () => unsubscribe(); // Detach listener on unmount
-        }
-    }, [currentUserID]);
-
-    // // Fetch recent chat messages from Firebase
-    // async function getRecentFitnessChatbotMessages(db, userUid, messageLimit) {
-    //     const messagesRef = collection(db, "users", userUid, "fitnessMessages");
-    //     const q = query(
-    //         messagesRef,
-    //         orderBy("timestamp", "desc"),
-    //         limit(messageLimit)
-    //     );
-    //     const querySnapshot = await getDocs(q);
-    //     var messages = [];
-    //     querySnapshot.forEach((doc) => {
-    //         const messageData = {
-    //             parts: [{ text: doc.data().content }],
-    //             role: doc.data().sender,
-    //             id: doc.id,
-    //         };
-    //         messages.push(messageData);
-    //     });
-    //     messages = messages.reverse();
-    //     setChat(messages);
-    // }
-
-    // // Load messages on component mount
-    // useEffect(() => {
-    //     if(FIREBASE_AUTH.currentUser?.uid){
-    //         getRecentFitnessChatbotMessages(FIREBASE_DB, FIREBASE_AUTH.currentUser.uid, 10);
-    //     }
-    //             // console.log("Stored Messages:",message);
-    // }, []);
+            setScreenLoading(false);
+    }
 
     const handleUserInput = async () => {
         if (!userInput.trim()) return;
@@ -111,9 +89,6 @@ export function Fitness_Chat() {
         setError('');
 
         try {
-            // // Ensure backend knows the user (this might be better handled with auth tokens per request)
-            // await axios.get(`${SET_USER_ID}/${currentUserID}`);
-            // console.log("User ID set for Fitness API:", currentUserID);
 
             const idToken = await currentUser.getIdToken();
 
@@ -133,17 +108,7 @@ export function Fitness_Chat() {
             const modelMessageFirestoreId = apiResponse.data.model_message_firestore_id; // ID of the message in fitnessMessages
 
             if (modelText && episodeIdFromServer) {
-                // UI update for model message is handled by onSnapshot listener if backend saves it
-                // If backend doesn't save to fitnessMessages for display, add it here:
-                // const modelMessageForUI: ChatMessage = {
-                //     id: modelMessageFirestoreId || `model-${Date.now()}`, // Use actual ID if available
-                //     role: 'model',
-                //     parts: [{ text: modelText }],
-                //     rl_episode_id: episodeIdFromServer,
-                //     model_message_firestore_id: modelMessageFirestoreId
-                // };
-                // setChat(prevChat => [...prevChat, modelMessageForUI]);
-
+                // UI update for model message is handled by onSnapshot listener
                 // The backend now saves both user and model messages to fitnessMessages
                 // so the onSnapshot listener should pick them up.
             } else if (apiResponse.data.error_logging_rl) {
@@ -163,68 +128,6 @@ export function Fitness_Chat() {
         }
     };
 
-    // // Save a message to Firebase
-    // async function addMessage(db, userUid, sender, text) {
-    //     try {
-    //         const messagesRef = collection(db, "users", userUid, "fitnessMessages");
-    //         const newMessage = {
-    //             sender: sender,
-    //             content: text,
-    //             timestamp: serverTimestamp(),
-    //         };
-    //         const docRef = await addDoc(messagesRef, newMessage);
-    //         console.log("Document written with ID: ", docRef.id);
-    //         return docRef;
-    //     } catch (e) {
-    //         console.error("Error adding document: ", e);
-    //         throw e;
-    //     }
-    // }
-
-    // // Handle user input and API call
-    // const handleUserInput = async () => {
-    //     // Update chat with user message
-    //     let updatedChat = [
-    //         ...chat,
-    //         {
-    //             role: 'user',
-    //             parts: [{ text: userInput }],
-    //         },
-    //     ];
-    //     setLoading(true);
-
-    //     try {
-    //         // Make API call to fetch bot response
-    //         const USER_ID = FIREBASE_AUTH.currentUser?.uid;
-    //         const set_user_id = await axios.get(`${SET_USER_ID}/${USER_ID}`);
-    //         const response = await axios.get(`${FITNESS_API_URL}/${userInput}`);
-    //         console.log("Agent Response", response.data['response']);
-
-    //         if (response.data) {
-    //             // Update chat with bot response
-    //             const updatedChatWithModel = [
-    //                 ...updatedChat,
-    //                 {
-    //                     role: 'model',
-    //                     parts: [{ text: response.data['response'] }],
-    //                 },
-    //             ];
-    //             setChat(updatedChatWithModel);
-
-    //             // Save both user and bot messages to Firebase
-    //             addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "user", userInput);
-    //             addMessage(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, "model", response.data['response']);
-    //             setUserInput("");
-    //             setError("");
-    //         }
-    //     } catch (error) {
-    //         console.log("Error calling Fitness API", error);
-    //         setError("An Error occurred, Please try again");
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
     const handleSpeech = async (textToSpeak: string) => {
         if (isSpeakingSpeaker) {
             await stop();
@@ -236,19 +139,6 @@ export function Fitness_Chat() {
             }
         }
     };
-
-    // // Handle speech synthesis for chat messages
-    // const handleSpeech = async (text) => {
-    //     if (isSpeaking) {
-    //         stop();
-    //         setIsSpeaking(false);
-    //     } else {
-    //         if (!(await isSpeakingAsync())) {
-    //             speak(text);
-    //             setIsSpeaking(true);
-    //         }
-    //     }
-    // };
 
     const renderChatItem = ({ item }: { item: ChatMessage }) => {
         return (
@@ -264,79 +154,44 @@ export function Fitness_Chat() {
         );
     };
 
-    // // Render each chat message
-    // const renderChatItem = ({ item }) => {
-    //     return (
-    //         <ChatBubble
-    //             role={item.role}
-    //             text={item.parts[0].text}
-    //             messageId={item.id}
-    //             onSpeech={() => handleSpeech(item.parts[0].text)}
-    //         />
-    //     );
-    // };
-
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Fitness ChatBot</Text>
-            <FlatList
-                data={chat}
-                renderItem={renderChatItem}
-                keyExtractor={(item, index) => index.toString()} // Use unique message ID
-                contentContainerStyle={styles.chatContainer}
-                // inverted // Consider if new messages should appear at bottom and scroll up
-            />
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    value={userInput}
-                    onChangeText={setUserInput}
-                    placeholder="Ask fitness or nutrition questions..."
-                />
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: userInput.trim() ? '#007AFF' : '#8bbff7' }]}
-                    onPress={handleUserInput}
-                    disabled={!userInput.trim() || loading}
-                >
-                    <MaterialCommunityIcons name="send" size={25} color="white" />
-                </TouchableOpacity>
+        screenLoading ? (
+            <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+                <ActivityIndicator size="large" color="#004643" />
+                <Text style={{marginTop: 10, fontWeight: "600"}}>Loading...</Text>
             </View>
-            {loading && <ActivityIndicator style={styles.loading} size="large" color="#007AFF" />}
-            {error && <Text style={styles.error}>{error}</Text>}
-        </View>
+        ) : (
+            <View style={styles.container}>
+                <Text style={styles.title}>Fitness ChatBot</Text>
+                <FlatList
+                    data={chat}
+                    renderItem={renderChatItem}
+                    keyExtractor={(item, index) => index.toString()} // Use unique message ID
+                    contentContainerStyle={styles.chatContainer}
+                    // inverted // Consider if new messages should appear at bottom and scroll up
+                />
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.input}
+                        value={userInput}
+                        onChangeText={setUserInput}
+                        placeholder="Ask fitness or nutrition questions..."
+                    />
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: userInput.trim() ? '#007AFF' : '#8bbff7' }]}
+                        onPress={handleUserInput}
+                        disabled={!userInput.trim() || loading}
+                    >
+                        <MaterialCommunityIcons name="send" size={25} color="white" />
+                    </TouchableOpacity>
+                </View>
+                {loading && <ActivityIndicator style={styles.loading} size="large" color="#007AFF" />}
+                {error && <Text style={styles.error}>{error}</Text>}
+            </View>
+        )
+        
     );
 }
-
-//     // Main render function
-//     return (
-//         <View style={styles.container}>
-//             <Text style={styles.title}>Fitness ChatBot</Text>
-//             <FlatList
-//                 data={chat}
-//                 renderItem={renderChatItem}
-//                 keyExtractor={(item, index) => index.toString()}
-//                 contentContainerStyle={styles.chatContainer}
-//             />
-//             <View style={styles.inputContainer}>
-//                 <TextInput
-//                     style={styles.input}
-//                     value={userInput}
-//                     onChangeText={setUserInput}
-//                     placeholder="Type a message"
-//                 />
-//                 <TouchableOpacity
-//                     style={[styles.button, { backgroundColor: userInput ? '#007AFF' : '#8bbff7' }]}
-//                     onPress={handleUserInput}
-//                     disabled={!userInput}
-//                 >
-//                     <Text style={styles.buttonText}>Send</Text>
-//                 </TouchableOpacity>
-//             </View>
-//             {loading && <ActivityIndicator size="large" color="#0000ff" />}
-//             {error && <Text style={styles.error}>{error}</Text>}
-//         </View>
-//     );
-// }
 
 export default Fitness_Chat;
 
