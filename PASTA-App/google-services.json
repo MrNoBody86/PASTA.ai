@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "503761265112",
+    "firebase_url": "https://pasta-ai-default-rtdb.firebaseio.com",
+    "project_id": "pasta-ai",
+    "storage_bucket": "pasta-ai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:503761265112:android:db53a9ddf5173d05e512ad",
+        "android_client_info": {
+          "package_name": "com.j0seph_mart1n.pastaai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "503761265112-dv2gn8jc24n91em5bomh4qr51tv9uqua.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBu6_Gnx6CvqV1YEmOIg9N3IcQhTSC4Y-Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "503761265112-dv2gn8jc24n91em5bomh4qr51tv9uqua.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "503761265112-v2m84578t5e2su9etrgvv5kb3folfbk3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "IOSpastaAI"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

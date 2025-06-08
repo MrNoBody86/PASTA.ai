@@ -2,12 +2,42 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native'
 import { TextInput, ScrollView } from 'react-native-gesture-handler';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
 import ProgressBar from 'react-native-progress/Bar';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dimensions } from 'react-native';
 import { FIREBASE_AUTH, FIREBASE_DB } from '@/FirebaseConfig';
 import { collection, addDoc, serverTimestamp, orderBy, query, getDocs, limit } from 'firebase/firestore';
-import React from 'react'
+import { getCurrentGoogleUser, fetchGoogleFitData } from '@/src/services/GoogleApiService';
 import { Scroll } from 'lucide-react-native';
+
+// Helper to parse Google Fit API response
+const parseFitData = (fitApiResponse: any) => {
+    let steps = 0;
+    let calories = 0;
+    let distance = 0;
+
+    if (fitApiResponse && fitApiResponse.bucket) {
+        fitApiResponse.bucket.forEach((bucket: any) => {
+        bucket.dataset.forEach((dataset: any) => {
+            dataset.point.forEach((point: any) => {
+            if (point.value && point.value.length > 0) {
+                if (dataset.dataSourceId.includes("step_count")) {
+                    steps += point.value[0].intVal || 0;
+                } else if (dataset.dataSourceId.includes("calories.expended")) {
+                    calories += point.value[0].fpVal || 0;
+                } else if (dataset.dataSourceId.includes("distance")) {
+                    distance += point.value[0].fpVal || 0;
+                }
+            }
+            });
+        });
+        });
+    }
+    return {
+        steps,
+        calories: Math.round(calories),
+        distance: parseFloat((distance / 1000).toFixed(2)), // meters to km
+    };
+};
 
 const Dashboard = () => {
 
@@ -22,6 +52,9 @@ const Dashboard = () => {
   const [pLoading, setPLoading] = useState(true);
   const [TLoading, setTLoading] = useState(true);
   const [ALoading, setALoading] = useState(true);
+
+  const [googleFitStats, setGoogleFitStats] = useState<{steps: number, calories: number, distance: number} | null>(null);
+  const [isGoogleFitLoading, setIsGoogleFitLoading] = useState(false);
 
   const screenWidth = Dimensions.get('window').width;
 
@@ -137,6 +170,26 @@ const Dashboard = () => {
         await getActivitiesFromFireBase(FIREBASE_DB, FIREBASE_AUTH.currentUser?.uid, 10);
       };
       loadInitialData();
+      const loadGoogleFit = async () => {
+      setIsGoogleFitLoading(true);
+      const googleAuth = await getCurrentGoogleUser();
+      if (googleAuth && googleAuth.accessToken) {
+        try {
+          const now = new Date();
+          const startTime = new Date(now);
+          startTime.setHours(0, 0, 0, 0); // Start of today
+          const endTime = new Date(now);
+          endTime.setHours(23, 59, 59, 999); // End of today
+          const rawData = await fetchGoogleFitData(googleAuth.accessToken, startTime.getTime(), endTime.getTime());
+          setGoogleFitStats(parseFitData(rawData));
+        } catch (e) {
+          console.warn("Dashboard: Failed to fetch Google Fit data", e);
+          setGoogleFitStats(null); // Clear on error
+        }
+      }
+      setIsGoogleFitLoading(false);
+    };
+    loadGoogleFit();
   }, []);
 
   return (
@@ -178,6 +231,24 @@ const Dashboard = () => {
             
             )}
             
+        </View>
+
+        {/* Google Fit Stats Section Example */}
+        <View style={styles.googleFitBoard}>
+          <Text style={{fontWeight: 'bold', fontSize: 19, paddingBottom: 5}}>Today's Google Fit Stats 🏃‍♂️</Text>
+          {isGoogleFitLoading ? (
+            <ActivityIndicator size="large" color="#0000ff" style={{marginTop: 20}} />
+          ) : googleFitStats ? (
+            <>
+              <Text>Steps: {googleFitStats.steps}</Text>
+              <Text>Calories Burned: {googleFitStats.calories}</Text>
+              <Text>Distance: {googleFitStats.distance} km</Text>
+            </>
+          ) : (
+            <Text style={{textAlign: 'center', color: '#888', marginTop: 15 }}>
+              Connect Google Fit via 'Google Sync' page to see stats.
+            </Text>
+          )}
         </View>
 
         <View style={styles.taskBoard}>
@@ -332,4 +403,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#444',
   },
+  googleFitBoard: {
+  marginTop: 20,
+  padding: 16,
+  backgroundColor: '#fff',
+  borderRadius: 10,
+  minHeight: 100,
+  }
 })

@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, Button, FlatList, KeyboardAvoidingView, VirtualizedList, ActivityIndicator } from 'react-native'
-import { useState } from 'react'
+import { View, Text, StyleSheet, Button, FlatList, KeyboardAvoidingView, VirtualizedList, ActivityIndicator, Alert } from 'react-native'
+import React,{ useState } from 'react'
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context'
 import { Pressable, ScrollView, TextInput } from 'react-native-gesture-handler'
 import { SelectCountry } from 'react-native-element-dropdown'
@@ -10,6 +10,7 @@ import { TASK_AGENT_URL, SET_USER_ID } from '@/constants'
 import { FIREBASE_DB, FIREBASE_AUTH } from '@/FirebaseConfig';
 import { collection, query, orderBy, getDocs, limit, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import axios from 'axios';
+import { getCurrentGoogleUser, createGoogleCalendarEvent } from '@/src/services/GoogleApiService';
 
 interface RouterProps {
   navigation: NavigationProp<any, any>;
@@ -86,7 +87,7 @@ const Inside_Task = ({ route, navigation }) => {
     const [date, setDate] = useState(INtaskDate);
     const [time, setTime] = useState(INtaskTime);
     const [completed, setCompleted] = useState(INcompleted);
-    const [timestamp, setTimestamp] = useState(INtimestamp);
+    // const [timestamp, setTimestamp] = useState(INtimestamp);
     const [showDate, setShowDate] = useState(false);
     const [showTime, setShowTime] = useState(false);
     const [subTask, setSubTask] = useState(INsubTasks);
@@ -130,7 +131,7 @@ const Inside_Task = ({ route, navigation }) => {
     async function addTaskToFireBase(db, userUid, taskName, taskDescription, taskCategory, taskPriority, taskDate, taskTime, subTasks) {
       if (!userUid) {
         console.error("Error adding task: User not authenticated.");
-        return;
+        return Promise.reject(new Error("User not authenticated"));;
       }
       try {
           const messagesRef = collection(db, "users", userUid, "tasks");
@@ -151,14 +152,14 @@ const Inside_Task = ({ route, navigation }) => {
           return docRef;
         } catch (e) {
           console.error("Error adding document: ", e);
-          throw e;
+          return Promise.reject(e);
         }
     }
 
     async function updateTaskInFirebase(db, userUid, taskId, updatedTask) {
       if (!userUid || !taskId) {
         console.error("Error updating task: User not authenticated or Task ID missing.");
-        return;
+        return Promise.reject(new Error("User not authenticated or Task ID missing."));
       }
       try {
         const taskRef = doc(db, "users", userUid, "tasks", taskId);
@@ -169,17 +170,64 @@ const Inside_Task = ({ route, navigation }) => {
             lastUpdated: serverTimestamp(), // Add a last updated timestamp
         });
         console.log("Task updated successfully: ", taskId);
-        navigation.navigate('Task'); // or show confirmation
+        // navigation.navigate('Task'); // Move navigation out or handle it after all operations
+        return Promise.resolve();
       } catch (error) {
         console.error("Error updating task:", error);
+        return Promise.reject(error);
       }
     }
 
-    const handleSaveTask = () => {
+    // --- Google Calendar Function ---
+    const addCurrentTaskToGoogleCalendar = async () => {
+      setIsLoadingAI(true); // Reuse loading state or add a new one for calendar
+      const googleAuth = await getCurrentGoogleUser();
+
+      if (!googleAuth || !googleAuth.accessToken) {
+        Alert.alert(
+          "Not Connected",
+          "Please connect your Google account on the 'Google Sync' page to add tasks to your calendar.",
+          [{ text: "OK" }]
+        );
+        setIsLoadingAI(false);
+        return;
+      }
+
+      try {
+        const startDateTime = new Date(date); // task's date
+        startDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0); // task's time
+
+        const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // Assume 1-hour duration
+
+        const eventData = {
+          summary: taskName || "Untitled Task from Pasta.ai",
+          description: taskDescription || `Sub-tasks: ${subTask.map(st => st.key).join(', ')}`,
+          start: {
+            dateTime: startDateTime.toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+          end: {
+            dateTime: endDateTime.toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+        };
+
+        await createGoogleCalendarEvent(googleAuth.accessToken, 'primary', eventData);
+        Alert.alert("Success!", "Task added to your Google Calendar.");
+      } catch (error) {
+        console.error("Error adding task to GCal:", error);
+        Alert.alert("Calendar Error", "Could not add task to Google Calendar. Ensure you are connected and try again.");
+      } finally {
+        setIsLoadingAI(false);
+      }
+    };
+
+
+    const handleSaveTask = async () => {
       const currentUserID = FIREBASE_AUTH.currentUser?.uid;
       if (!currentUserID) {
           console.error("Cannot save task: User not authenticated.");
-          // Show error to user
+          Alert.alert("Authentication Error", "You must be logged in to save tasks.");
           return;
       }
       const taskData = {
@@ -202,12 +250,48 @@ const Inside_Task = ({ route, navigation }) => {
       //   taskData.timestamp = timestamp; // Keep the original timestamp for updates
       // }
 
-      if(taskId) {
-        updateTaskInFirebase(FIREBASE_DB, currentUserID, taskId, taskData);
-      } else {
-        addTaskToFireBase(FIREBASE_DB, currentUserID, taskName, taskDescription, category, priority, date, time, subTask);
-      }
-    }
+      const saveToFirebase = async () => {
+            if (taskId) { // If taskId exists, it's an update
+                return updateTaskInFirebase(FIREBASE_DB, currentUserID, taskId, taskDataForFirebase);
+            } else { // No taskId, it's a new task
+                return addTaskToFireBase(FIREBASE_DB, currentUserID, taskName, taskDescription, category, priority, date, time, subTask);
+            }
+      };
+
+      try {
+            const docRefOrUndefined = await saveToFirebase(); 
+
+            // Check if it was a new task and was successfully created OR an existing task was updated
+            const taskSuccessfullySaved = taskId ? true : (docRefOrUndefined ? true : false);
+
+            if (taskSuccessfullySaved) {
+              Alert.alert(
+                  "Task Saved",
+                  "Do you want to add this task to your Google Calendar?",
+                  [
+                      { text: "No", style: "cancel", onPress: () => navigation.navigate('Task') },
+                      {
+                          text: "Yes",
+                          onPress: async () => {
+                              await addCurrentTaskToGoogleCalendar(); // This is already async
+                              navigation.navigate('Task');
+                          }
+                      }
+                  ]
+              );
+            } else if (!taskId) { // Only if it was a new task and saving failed (docRefOrUndefined is falsy)
+              Alert.alert("Save Error", "Could not save the new task to our records.");
+              navigation.navigate('Task'); // Still navigate back or handle error differently
+            }
+            // If taskId existed, updateTaskInFirebase handles its own success/error logging.
+            // If update failed, the catch block below will handle it.
+
+        } catch (error) {
+            console.error("Error during Firebase operation or subsequent GCal sync prompt:", error);
+            Alert.alert("Operation Failed", "An error occurred while saving the task or setting up calendar sync.");
+            navigation.navigate('Task'); // Navigate back on any major error
+        }
+    };
 
     const task_agent = async () => {
       const currentUser = FIREBASE_AUTH.currentUser;

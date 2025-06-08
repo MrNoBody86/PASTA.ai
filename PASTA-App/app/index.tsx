@@ -22,6 +22,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {Logo2} from "@/Images";
 import {SafeAreaView, SafeAreaProvider} from 'react-native-safe-area-context';
 import Signup from '@/src/pages/Signup';
+import GoogleSyncPage from '@/src/pages/GoogleSyncPage'; // Adjust path
+
 
 // Main App component
 export default function App() {
@@ -151,6 +153,15 @@ export default function App() {
             options={{drawerLabel: "Fitness Page",
                       headerTitle: "Fitness Page", 
                       drawerIcon: ({size, color}) => (<Ionicons name="fitness-outline" color={color} size={size} />)}}
+          />
+          <Drawer.Screen
+            name="GoogleSync" // Route name
+            component={GoogleSyncPage}
+            options={{
+              drawerLabel: "Google Sync",
+              headerTitle: "Google Services",
+              drawerIcon: ({ size, color }) => (<Ionicons name="sync-circle-outline" color={color} size={size} />)
+            }}
           />
       </Drawer.Navigator>
     )

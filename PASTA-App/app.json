@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/images/Logo2.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.j0seph_mart1n.pastaai"
+      "package": "com.j0seph_mart1n.pastaai",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -38,7 +39,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin",
     ],
     "experiments": {
       "typedRoutes": true
