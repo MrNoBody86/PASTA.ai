@@ -132,11 +132,9 @@ const ChatBubble = ({ role, text, messageId, rlEpisodeId, onSpeech,}) => {
 
         {role === "model" && ( // Show speaker and feedback only for model messages
             <>
-                <TouchableOpacity style={styles.speakerIcon} onPress={onSpeech} disabled={isLoadingFeedback}>
-                    <Ionicons name="volume-high-outline" size={24} color="#fff" />
-                </TouchableOpacity>
+                
 
-                {rlEpisodeId && ( // Only show feedback UI if there's an rlEpisodeId
+                {rlEpisodeId ? ( // Only show feedback UI if there's an rlEpisodeId
                     <>
                         {!isSubmitted && !isLoadingFeedback && (
                             <View style={styles.ratingContainer}>
@@ -169,8 +167,16 @@ const ChatBubble = ({ role, text, messageId, rlEpisodeId, onSpeech,}) => {
                         )}
                         {isLoadingFeedback && <ActivityIndicator size="small" color="#FFD700" />}
                         {feedbackError && <Text style={styles.errorText}>{feedbackError}</Text>}
+                        <TouchableOpacity style={styles.speakerIcon} onPress={onSpeech} disabled={isLoadingFeedback}>
+                            <Ionicons name="volume-high-outline" size={24} color="#fff" />
+                        </TouchableOpacity>
                     </>
+                ) : (
+                    <TouchableOpacity style={{bottom: 5, left: 255}} onPress={onSpeech} disabled={isLoadingFeedback}>
+                        <Ionicons name="volume-high-outline" size={24} color="#fff" />
+                    </TouchableOpacity>
                 )}
+                
             </>
         )}
     </View>
@@ -209,9 +215,9 @@ const styles = StyleSheet.create({
     },
 
     speakerIcon: {
-        position: "absolute",
-        right: 8,
-        top: 8,
+        left: 185,
+        bottom: 33,
+        
     },
 
     ratingContainer: {

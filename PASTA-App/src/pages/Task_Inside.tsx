@@ -19,60 +19,36 @@ const CATEGORY = [
     {
       value: 'Personal',
       label: 'Personal',
-      image: {
-        uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
-      }
     },
     {
       value: 'Work',
       label: 'Work',
-      image: {
-        uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
-      }
     },
     {
       value: 'Shopping',
       label: 'Shopping',
-      image: {
-        uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
-      }
     },
     {
       value: 'Health',
       label: 'Health',
-      image: {
-        uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
-      }
     },
     {
       value: 'Other',
       label: 'Other',
-      image: {
-        uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
-      }
     },
   ];
 const PRIORITY = [
     {
       value: 'Low',
       label: 'Low',
-      image: {
-        uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
-      }
     },
     {
       value: 'Medium',
       label: 'Medium',
-      image: {
-        uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
-      }
     },
     {
       value: 'High',
       label: 'High',
-      image: {
-        uri: "https://www.vigcenter.com/public/all/images/default-image.jpg"
-      }
     },
   ];
 
@@ -336,7 +312,7 @@ const Inside_Task = ({ route, navigation }) => {
                         data={CATEGORY}
                         valueField="value"
                         labelField="label"
-                        imageField="image"
+                        imageField=""
                         placeholder="Select Category"
                         searchPlaceholder="Search..."
                         onChange={e => {
@@ -357,7 +333,7 @@ const Inside_Task = ({ route, navigation }) => {
                         data={PRIORITY}
                         valueField="value"
                         labelField="label"
-                        imageField="image"
+                        imageField=""
                         placeholder="Select Category"
                         searchPlaceholder="Search..."
                         onChange={e => {
@@ -368,7 +344,7 @@ const Inside_Task = ({ route, navigation }) => {
             </View>
             
             <View style={styles.subTasks}>
-                <Text style={{fontSize: 18, fontWeight: 'bold', paddingBottom: 5 }}>SubTasks</Text>
+                <Text style={{fontSize: 18, fontWeight: 'bold', paddingBottom: 5 }}>Add Subtasks</Text>
                 <View style={{flexDirection: 'column', maxHeight: 200}}>
                   <ScrollView>
                     {subTask.map((item, index) => (
@@ -383,7 +359,7 @@ const Inside_Task = ({ route, navigation }) => {
                 </View>
                 <KeyboardAvoidingView behavior='padding'>
                   <View style={{flexDirection: 'row'}}> 
-                      <TextInput style={{backgroundColor: 'white', width: 250, borderRadius: 10}} value={subTaskText} onChangeText={setSubTaskText}/>
+                      <TextInput style={{backgroundColor: 'white', width: '76%', borderRadius: 10}} value={subTaskText} onChangeText={setSubTaskText}/>
                       <Pressable style={styles.subTaskButton} onPress={() => addSubTasks(subTaskText)} >
                           <Text style={{color: 'white'}}>Add</Text>
                       </Pressable>
@@ -433,7 +409,7 @@ const styles = StyleSheet.create({
         margin: 0,
         height: 50,
         width: 150,
-        backgroundColor: '#EEEEEE',
+        backgroundColor: '#F8F9FA',
         borderRadius: 22,
         paddingHorizontal: 8,
       },

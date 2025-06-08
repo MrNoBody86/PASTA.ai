@@ -15,6 +15,19 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
     const [allTasks, setAllTasks] = useState([]);
     const [screenLoading, setScreenLoading] = useState(true);
 
+    const getPriorityColor = (priority: string) => {
+      switch (priority.toLowerCase()) {
+        case 'high':
+          return '#FF6B6B';
+        case 'medium':
+          return '#FFA500';
+        case 'low':
+          return '#4CAF50';
+        default:
+          return '#CCCCCC';
+      }
+    };
+
     async function getTaskDetailsFromFireBase(db, userUid, messageLimit) {
         const messagesRef = collection(db, "users", userUid, "tasks");
         const q = query(
@@ -129,8 +142,8 @@ const Task_Manager = ({ navigation, route } : RouterProps) => {
                   </Text>
                   <View style={styles.taskDetails}>
                     <Text style={styles.date}>{item.taskDate.toLocaleDateString()}</Text>
-                    <Text>{item.taskCategory}</Text>
-                    <Text>{item.taskPriority}</Text>
+                    <Text style={{backgroundColor: '#d0ebff', color: '#1c7ed6', borderRadius: 10, padding: 4, fontSize: 13}}>{item.taskCategory}</Text>
+                    <Text style={{ backgroundColor: getPriorityColor(item.taskPriority), color: 'white', borderRadius: 10, padding: 4, fontSize: 13 }}>{item.taskPriority}</Text>
                   </View>
                 </View>
 
@@ -214,16 +227,18 @@ const styles = StyleSheet.create({
       marginBottom: 80,
     },
     taskContainer: {
-        height: 85,
+        height: 95,
         backgroundColor: '#fff',
         borderRadius: 20,
         flexDirection: 'row',
         gap: 5,
-        marginTop: 10
+        marginTop: 10,
+        elevation: 5,
     },
     taskTitle: {
         fontSize: 18,
         marginTop: 15,
+        fontWeight: 'bold',
     },
     taskDetails:{
         flexDirection: 'row',
@@ -262,7 +277,7 @@ const styles = StyleSheet.create({
     checkbox: {
         marginTop: 'auto',
         marginBottom: 'auto',
-        paddingLeft: 12
+        paddingLeft: 12,
     },
     addTask: {
         position: 'absolute',

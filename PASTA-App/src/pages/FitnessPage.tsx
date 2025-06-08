@@ -177,30 +177,31 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
                             </Text>
                         ) : (
                         allActivities.map((activity, index) => (
-                            <View key={index} style={{flexDirection: 'row', justifyContent: 'space-between', padding: 5}}>
-                                <Text style={{fontSize: 20, width: 250}}>{index+1}. {activity.ActivityTitle}</Text>
-                                <View style={{flexDirection:'row', gap: 10, alignItems: 'center'}}>
-                                    <Pressable onPress={() => {navigation.navigate('ActivityPage', {
-                                        INActivityId: activity.ActivityId,
-                                        INActivityTitle: activity.ActivityTitle,
-                                        INActivityType: activity.ActivityType,
-                                        INStartDate: activity.StartDate,
-                                        INStartTime: activity.StartTime,
-                                        INDuration: activity.Duration,
-                                        INDistance: activity.Distance,
-                                        INCalories: activity.Calories,
-                                        INSteps: activity.Steps,
-                                        INActivityDescription: activity.ActivityDescription,
-                                        INTimestamp: activity.timestamp,
-                                    })}}>
-                                        <MaterialCommunityIcons name='chevron-right' size={30} color="black"/>
+                            <View key={index} style={styles.activityRow}>
+                                
+                                <View style={styles.iconContainer}>
+                                    <Pressable onPress={() => navigation.navigate('ActivityPage', {
+                                    INActivityId: activity.ActivityId,
+                                    INActivityTitle: activity.ActivityTitle,
+                                    INActivityType: activity.ActivityType,
+                                    INStartDate: activity.StartDate,
+                                    INStartTime: activity.StartTime,
+                                    INDuration: activity.Duration,
+                                    INDistance: activity.Distance,
+                                    INCalories: activity.Calories,
+                                    INSteps: activity.Steps,
+                                    INActivityDescription: activity.ActivityDescription,
+                                    INTimestamp: activity.timestamp,
+                                    })} style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                                        <Text style={styles.activityText}>{index + 1}. {activity.ActivityTitle}</Text>
+                                    <MaterialCommunityIcons name="chevron-right" size={26} color={COLORS.icon} />
                                     </Pressable>
                                     <Pressable onPress={() => deleteActivityFromFirebase(activity.ActivityId, index)}>
-                                        <MaterialCommunityIcons name='delete' size={20} color='black' />
+                                    <MaterialCommunityIcons name="delete" size={22} color='black' />
                                     </Pressable>
                                 </View>
-                                
                             </View>
+
                         ))
                         )}
                     </ScrollView>
@@ -232,64 +233,113 @@ const FitnessPage = ({ navigation, route } : RouterProps) => {
     
   )
 }
-
+const COLORS = {
+  primary: '#3A86FF',
+  secondary: '#FFBE0B',
+  background: '#F1F3F6',
+  card: '#FFFFFF',
+  text: '#1D3557',
+  icon: '#1D3557',
+  shadow: '#000000',
+  danger: '#E63946',
+}
 const styles = StyleSheet.create({
-    container: {
-        padding: 20,
-    },
-    text: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    statsContainer: {
-        padding: 10,
-        backgroundColor: 'white',
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    calAndKmsContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 20,
-        gap: 80,
-    },
-    chatBotContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 10,
-        padding: 15,
-        backgroundColor: 'white',
-        borderRadius: 20,
-    },
-    activityContainer: {
-        marginTop: 10,
-        padding: 15,
-        backgroundColor: 'white',
-        borderRadius: 20,
-    },
-    insideContainer: {
-        maxHeight: 150,
-        backgroundColor: 'white',
-        borderRadius: 20,
-        padding: 5,
-    },
-    addActivity: {
-        position: 'absolute',
-        bottom: 30,
-        right: 20,
-        backgroundColor: 'white',
-        width: 60,
-        height: 60,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 30,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    }
-})
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: COLORS.background,
+  },
+  text: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: 'black',
+    marginBottom: 8,
+  },
+  statsContainer: {
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  calAndKmsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    marginTop: 20,
+    width: '100%',
+  },
+  chatBotContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  activityContainer: {
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  insideContainer: {
+    maxHeight: 160,
+  },
+  activityRows: {
+    paddingVertical: 5,
+  },
+  activityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  activityText: {
+    fontSize: 16,
+    color: 'black',
+    flexShrink: 1,
+    width: '80%',
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    justifyContent: 'space-between',
+    width: '97%',
+  },
+  addActivity: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    backgroundColor: 'white',
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 30,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+});
 
 export default FitnessPage
